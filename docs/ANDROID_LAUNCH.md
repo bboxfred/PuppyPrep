@@ -8,7 +8,7 @@ Strategy: ship to Google Play first at **S$35 one-time cost**. Prove revenue. Ad
 
 - [x] Expo account: `bboxfred`
 - [x] Google Play Console: signed up
-- [x] `app.json`: Android package `com.puppycarecompass.app`, owner `bboxfred`
+- [x] `app.json`: Android package `com.puppyprep.app`, owner `bboxfred`
 - [x] `eas.json`: Android preview + production profiles configured
 - [x] Play Store icon: 512 × 512 at `assets/store/android/play-icon-512.png`
 - [x] Feature graphic: 1024 × 500 at `assets/store/android/feature-graphic-1024x500.png`
@@ -174,7 +174,7 @@ Before the Production release, set up the IAP:
 - **Don't lose your keystore.** EAS stores it, but back up locally via `npx eas credentials` → Download just in case. Without it you can never update the app.
 - **versionCode must increment every upload.** `eas.json` has `autoIncrement: true` for production — it handles this automatically. Don't manually set `versionCode` in `app.json` for production builds.
 - **First submission often gets rejected for:** missing data safety form, privacy URL not accessible, or screenshots that don't show the app (stock images are rejected).
-- **You cannot delete apps from Play Console** — once a package name is used it's gone forever. Make sure `com.puppycarecompass.app` is final before submitting.
+- **You cannot delete apps from Play Console** — once a package name is used it's gone forever. Make sure `com.puppyprep.app` is final before submitting.
 
 ---
 

@@ -21,7 +21,7 @@ Everything you need to do to get the app downloadable on the App Store + Google 
   - **Platform:** iOS
   - **Name:** Puppy Prep
   - **Primary language:** English (Singapore) or English (UK)
-  - **Bundle ID:** `com.puppycarecompass.app` (matches `app.json`)
+  - **Bundle ID:** `com.puppyprep.app` (matches `app.json`)
   - **SKU:** `puppyprep-v1` (any internal identifier)
 - [ ] Note the **ASC App ID** (numeric, shown after creation). Put it in `eas.json` → `submit.production.ios.ascAppId`.
 - [ ] Note your **Apple Team ID** (10-char, at developer.apple.com → Membership). Put it in `eas.json` → `submit.production.ios.appleTeamId`.

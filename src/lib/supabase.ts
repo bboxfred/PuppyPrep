@@ -44,7 +44,7 @@ export async function sendMagicLink(email: string) {
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
-      emailRedirectTo: 'puppycare://auth/callback',
+      emailRedirectTo: 'puppyprep://auth/callback',
     },
   });
 

@@ -1,14 +1,14 @@
-# CLAUDE.md — PuppyCare Compass 🐾
+# CLAUDE.md — Puppy Prep 🐾
 ## AI Development Reference for Claude Code
 
-> This file is the single source of truth for building PuppyCare Compass.
+> This file is the single source of truth for building Puppy Prep.
 > Read this entire file before writing any code. Refer back to it for every feature.
 
 ---
 
 ## 1. PROJECT OVERVIEW
 
-**App Name:** PuppyCare Compass
+**App Name:** Puppy Prep
 **Tagline:** "From bump to bark — we've got every day covered."
 **Target User:** First-time or inexperienced dog owners whose dog is pregnant or has just given birth. Zero prior knowledge assumed.
 **Primary Market:** Singapore + English-speaking SEA (launch), global (scale)
@@ -677,15 +677,15 @@ Features:
 ✓ Export to Google Calendar / Apple Calendar
 
 Price options:
-○ PuppyCare Pro — S$12.99 one-time
+○ Puppy Prep Pro — S$12.99 one-time
 ○ Litter Pro (with weight tracker) — S$18.99 one-time
 ```
 
 ### RevenueCat Products
 ```
-product_id: puppycare_pro_lifetime
+product_id: puppyprep_pro_lifetime
 product_id: litter_pro_lifetime
-product_id: puppycare_pro_annual    (S$5.99/year — fallback for price-sensitive)
+product_id: puppyprep_pro_annual    (S$5.99/year — fallback for price-sensitive)
 ```
 
 ---
@@ -987,7 +987,7 @@ When generating event detail copy, pull directly from these sources. Translate c
 
 ## 20. APP STORE METADATA
 
-**App Name:** PuppyCare Compass
+**App Name:** Puppy Prep
 **Subtitle:** Puppy care, day by day
 **Category:** Lifestyle / Pets
 
@@ -996,7 +996,7 @@ When generating event detail copy, pull directly from these sources. Translate c
 **Full Description:**
 ```
 Your dog is pregnant — and you have no idea what to do next.
-We've been there. PuppyCare Compass turns anxiety into a plan.
+We've been there. Puppy Prep turns anxiety into a plan.
 
 Answer 12 quick questions and we'll build a complete, personalised 
 care calendar for your dog — from today through 8 weeks after birth.
@@ -1032,7 +1032,7 @@ and more.
 
 ---
 
-*End of CLAUDE.md — PuppyCare Compass v1.0*
+*End of CLAUDE.md — Puppy Prep v1.0*
 *Freddy Lim | fred@collecter.club | claudecode.sg*
 *Last updated: April 2026*
 
