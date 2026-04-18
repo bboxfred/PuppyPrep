@@ -3,7 +3,7 @@
  * Shown when puppies reach 8 weeks. Summarises the journey.
  */
 import { useMemo } from 'react';
-import { View, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { View, ScrollView, Pressable, Image, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -59,7 +59,11 @@ export default function GraduationScreen() {
           end={{ x: 1, y: 1 }}
           style={styles.hero}
         >
-          <Text style={styles.heroEmoji}>🎓</Text>
+          <Image
+            source={require('../assets/images/graduation-hero.png')}
+            style={styles.heroImage}
+            resizeMode="contain"
+          />
           <Text style={styles.heroTitle}>Congratulations!</Text>
           <Text style={styles.heroSubtitle}>
             {puppyCount ?? 'Your'} {breedName ?? ''} {(puppyCount ?? 0) === 1 ? 'puppy has' : 'puppies have'} graduated!
@@ -168,14 +172,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg, alignItems: 'center',
   },
   heroEmoji: { fontSize: 64, marginBottom: Spacing.md },
-  heroTitle: { fontFamily: 'Nunito-ExtraBold', fontSize: 32, color: '#FFF', marginBottom: Spacing.sm },
-  heroSubtitle: { fontFamily: 'Quicksand-Medium', fontSize: 16, color: '#FFFFFFC0', textAlign: 'center', lineHeight: 24 },
-  heroDay: { fontFamily: 'Nunito-Bold', fontSize: 14, color: '#FFFFFF80', marginTop: Spacing.sm, backgroundColor: '#FFFFFF20', paddingHorizontal: 14, paddingVertical: 4, borderRadius: Radius.pill },
+  heroImage: { width: 220, height: 220, marginBottom: Spacing.md },
+  heroTitle: { fontFamily: 'YoungSerif-Regular', fontSize: 32, color: '#FFF', marginBottom: Spacing.sm },
+  heroSubtitle: { fontFamily: 'DMSans-Medium', fontSize: 16, color: '#FFFFFFC0', textAlign: 'center', lineHeight: 24 },
+  heroDay: { fontFamily: 'YoungSerif-Regular', fontSize: 14, color: '#FFFFFF80', marginTop: Spacing.sm, backgroundColor: '#FFFFFF20', paddingHorizontal: 14, paddingVertical: 4, borderRadius: Radius.pill },
   statsCard: { margin: Spacing.lg, marginTop: -Spacing.lg, padding: Spacing.lg },
   statsTitle: { marginBottom: Spacing.md },
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap' },
   statItem: { width: '50%', alignItems: 'center', paddingVertical: Spacing.sm },
-  statNumber: { fontFamily: 'Nunito-ExtraBold', fontSize: 28, color: Colors.primary },
+  statNumber: { fontFamily: 'YoungSerif-Regular', fontSize: 28, color: Colors.primary },
   puppyCard: { marginHorizontal: Spacing.lg, marginBottom: Spacing.lg, padding: Spacing.lg },
   puppyRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: Spacing.sm },
   puppyRowBorder: { borderBottomWidth: 1, borderBottomColor: Colors.creamDark + '30' },

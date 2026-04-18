@@ -5,7 +5,13 @@
  * After trial expires (and not paid): shows locked state.
  * Pro users: gate never shows.
  *
- * Birth Guide + Emergency Guide bypass this gate entirely — always free.
+ * ALWAYS FREE (never wrapped in this gate, regardless of tier):
+ *   - The entire Info Library — every article, every guide
+ *   - Birth Guide
+ *   - Emergency Guide
+ *
+ * This gate is only used for: the full personalised calendar beyond Day 7,
+ * push notifications, the weight tracker, and the home-screen widget.
  */
 import { type ReactNode } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
@@ -51,7 +57,7 @@ export function FeatureGate({ children, fallback, reason }: FeatureGateProps) {
         Your free trial has ended
       </Text>
       <Text variant="caption" color={Colors.textSecondary} style={styles.reason}>
-        {reason ?? 'Unlock everything with a one-time payment.'}
+        {reason ?? 'The full care calendar, reminders, and weight tracker live behind this. The Info Library is always free.'}
       </Text>
       <View style={styles.priceTag}>
         <Text variant="caption" weight="bold" color={Colors.primary}>

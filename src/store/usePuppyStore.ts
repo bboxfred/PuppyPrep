@@ -79,6 +79,12 @@ interface PuppyState extends DogProfile {
     'isJrtType' | 'isFoxTerrier' | 'isWireFoxTerrier' |
     'isBorderTerrier' | 'isMinPin' | 'isRatTerrier' | 'ratTerrierVariety'
   >>) => void;
+  /**
+   * Atomically record birth — transitions status from 'pregnant' to 'born',
+   * sets the birth date, and records puppy count. Caller must trigger
+   * schedule regeneration after calling this.
+   */
+  recordBirth: (birthDateISO: string, puppyCount: number) => void;
   resetProfile: () => void;
 }
 
@@ -159,6 +165,14 @@ export const usePuppyStore = create<PuppyState>()(
 
       setBreedFlags: (flags) =>
         set(flags),
+
+      recordBirth: (birthDateISO, puppyCount) =>
+        set({
+          status: 'born',
+          birthDate: birthDateISO,
+          puppyCount,
+          isSingleton: puppyCount === 1,
+        }),
 
       resetProfile: () =>
         set(initialState),

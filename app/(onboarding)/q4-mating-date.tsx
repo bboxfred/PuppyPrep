@@ -43,8 +43,7 @@ export default function Q4MatingDate() {
 
   return (
     <OnboardingScreen
-      illustration="📅"
-      heroColor="#3D8B8C"
+      illustrationImage={require('../../assets/images/onboard-calendar.png')}
       headline={isEstimated ? "Estimated due date?" : "When was she mated?"}
       subtext={isEstimated ? "Enter the date your vet gave you." : "If mated over multiple days, pick the first day."}
       onNext={handleContinue}

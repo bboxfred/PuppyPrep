@@ -616,18 +616,31 @@ export function checkNursingStatus(input: ScheduleInput): CalendarEvent[] {
 export function runAllConditions(input: ScheduleInput): CalendarEvent[] {
   const allEvents: CalendarEvent[] = [];
 
-  allEvents.push(...checkVetNotConfirmed(input));
+  // ── STATUS-AGNOSTIC checks (run for both pregnant AND born):
+  // These either handle internal status guards OR produce events that are
+  // valid in both phases (e.g. dam age risk warnings, first-litter coaching
+  // which covers Stage 1 labor AND postnatal support).
+  allEvents.push(...checkVetNotConfirmed(input)); // self-guards: pregnant-only
   allEvents.push(...checkDamAge(input));
   allEvents.push(...checkFirstLitter(input));
-  allEvents.push(...checkSingleton(input));
-  allEvents.push(...checkLargeLitter(input));
-  allEvents.push(...checkFoxTerrier(input));
-  allEvents.push(...checkWireFoxTerrier(input));
-  allEvents.push(...checkBorderTerrier(input));
-  allEvents.push(...checkMinPin(input));
-  allEvents.push(...checkMiniatureRatTerrier(input));
-  allEvents.push(...checkRatTerrierAllergy(input));
-  allEvents.push(...checkNursingStatus(input));
+
+  // ── POSTNATAL-ONLY checks:
+  // Every event these emit is anchored to Day 0+ (week-based coat care,
+  // singleton protocol, large-litter fatigue, breed-specific feeding, etc).
+  // If status is 'pregnant', the anchor is the estimated due date — firing
+  // these would place "Week 3 grooming" or "nursing check" BEFORE the
+  // puppies have even been born. Hard-gate them all here.
+  if (input.status === 'born') {
+    allEvents.push(...checkSingleton(input));
+    allEvents.push(...checkLargeLitter(input));
+    allEvents.push(...checkFoxTerrier(input));
+    allEvents.push(...checkWireFoxTerrier(input));
+    allEvents.push(...checkBorderTerrier(input));
+    allEvents.push(...checkMinPin(input));
+    allEvents.push(...checkMiniatureRatTerrier(input));
+    allEvents.push(...checkRatTerrierAllergy(input));
+    allEvents.push(...checkNursingStatus(input));
+  }
 
   return allEvents;
 }

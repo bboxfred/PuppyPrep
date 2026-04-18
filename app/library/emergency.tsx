@@ -183,8 +183,8 @@ const styles = StyleSheet.create({
   numbersCard: { marginBottom: Spacing.lg, borderWidth: 1, borderColor: '#D4726A20', backgroundColor: '#D4726A06' },
   numbersRow: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.md },
   numPill: { flex: 1, alignItems: 'center', paddingVertical: Spacing.sm, borderRadius: Radius.sm },
-  numVal: { fontFamily: 'Nunito-ExtraBold', fontSize: 22, color: '#FFF' },
-  numLabel: { fontFamily: 'Quicksand-Medium', fontSize: 10, color: '#FFFFFFC0' },
+  numVal: { fontFamily: 'YoungSerif-Regular', fontSize: 22, color: '#FFF' },
+  numLabel: { fontFamily: 'DMSans-Medium', fontSize: 10, color: '#FFFFFFC0' },
 
   // Scenarios
   sectionHeading: { marginBottom: Spacing.md, marginTop: Spacing.sm },
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
   },
   scenarioHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.sm },
   urgencyBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, flexShrink: 0, marginTop: 2 },
-  urgencyText: { fontSize: 10, fontFamily: 'Nunito-Bold', color: '#FFF', letterSpacing: 0.5 },
+  urgencyText: { fontSize: 10, fontFamily: 'YoungSerif-Regular', color: '#FFF', letterSpacing: 0.5 },
   scenarioTitleArea: { flex: 1 },
   scenarioTitle: { fontSize: 14, marginBottom: 2 },
   scenarioBody: { marginTop: Spacing.md, paddingTop: Spacing.md, borderTopWidth: 1, borderTopColor: Colors.creamDark + '50' },

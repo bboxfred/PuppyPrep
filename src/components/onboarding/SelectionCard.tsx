@@ -1,120 +1,152 @@
 /**
- * SELECTION CARD — Premium with animated entrance and selection feedback
+ * SELECTION CARD — Field Journal
+ *
+ * LAYOUT NOTE (critical):
+ *   - Outer: `Animated.View` for the entrance animation only.
+ *   - Middle: plain `Pressable` with flex-row styling. We do NOT use
+ *     `Animated.createAnimatedComponent(Pressable)` here because, on React
+ *     Native Web, Pressable with a function-style (`({pressed}) => [...]`)
+ *     can collapse to vertical stacking under some conditions. A plain
+ *     Pressable with object styles is boringly reliable.
+ *   - Inner: explicit `View` with `flexDirection: 'row'` wrapping the circle
+ *     indicator on the LEFT and the text on the RIGHT. This inner row is
+ *     redundantly enforced (width: 100%, flexWrap: nowrap) so no parent
+ *     container can accidentally squish it to a column.
+ *
+ * Unselected: paper bg, 1px `rule` hairline border.
+ * Selected:   surface bg, 1.5px `terracotta` border, terracotta check dot.
  */
+import { useState, useCallback } from 'react';
 import { Pressable, View, StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle, withSpring, FadeInRight } from 'react-native-reanimated';
 import { Text } from '@/components/ui/Text';
-import { Colors, Radius, Spacing, Shadows } from '@/constants/design-system';
+import { Colors, Radius, Spacing, Fonts } from '@/constants/design-system';
 
 interface SelectionCardProps {
+  /** Legacy emoji prop — accepted but not rendered (Field Journal hides emoji). */
   emoji?: string;
   title: string;
   description?: string;
   selected?: boolean;
   onPress: () => void;
+  /** Legacy accent — Field Journal uses terracotta for selected state. */
   accentColor?: string;
   /** Stagger index for entrance animation */
   index?: number;
 }
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
 export function SelectionCard({
-  emoji,
   title,
   description,
   selected = false,
   onPress,
-  accentColor = Colors.primary,
   index = 0,
 }: SelectionCardProps) {
+  const SELECTED_COLOR = Colors.terracotta;
+  const [pressed, setPressed] = useState(false);
+
   const checkAnim = useAnimatedStyle(() => ({
-    transform: [{ scale: withSpring(selected ? 1 : 0, { damping: 12, stiffness: 200 }) }],
+    transform: [{ scale: withSpring(selected ? 1 : 0, { damping: 14, stiffness: 220 }) }],
   }));
 
-  const borderAnim = useAnimatedStyle(() => ({
-    borderColor: withSpring(selected ? accentColor : '#E8DDD3', { damping: 20 }) as unknown as string,
-  }));
+  const handlePressIn = useCallback(() => setPressed(true), []);
+  const handlePressOut = useCallback(() => setPressed(false), []);
 
   return (
-    <AnimatedPressable
-      entering={FadeInRight.delay(100 + index * 80).duration(400).springify().damping(16)}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.card,
-        selected && { borderColor: accentColor, backgroundColor: Colors.creamLight },
-        pressed && { transform: [{ scale: 0.97 }] },
-      ]}
+    <Animated.View
+      entering={FadeInRight.delay(100 + index * 80).duration(380).springify().damping(16)}
+      style={styles.animWrap}
     >
-      {/* Emoji in gradient circle */}
-      {emoji && (
-        <View style={[styles.emojiCircle, selected && { backgroundColor: accentColor + '20' }]}>
-          <Text style={styles.emoji}>{emoji}</Text>
+      <Pressable
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        style={[
+          styles.card,
+          selected && {
+            borderColor: SELECTED_COLOR,
+            borderWidth: 1.5,
+            backgroundColor: Colors.surface,
+          },
+          pressed && { transform: [{ scale: 0.98 }] },
+        ]}
+      >
+        {/* EXPLICIT row layout — guaranteed horizontal on every platform */}
+        <View style={styles.row}>
+          {/* Check circle — LEFT */}
+          <View style={[styles.checkOuter, selected && { borderColor: SELECTED_COLOR }]}>
+            <Animated.View
+              style={[styles.checkInner, { backgroundColor: SELECTED_COLOR }, checkAnim]}
+            />
+          </View>
+
+          {/* Text — RIGHT (flex:1 to take remaining space) */}
+          <View style={styles.textCol}>
+            <Text style={styles.title}>{title}</Text>
+            {description ? <Text style={styles.desc}>{description}</Text> : null}
+          </View>
         </View>
-      )}
-
-      {/* Text */}
-      <View style={styles.textCol}>
-        <Text variant="body" weight={selected ? 'bold' : 'medium'} color={Colors.textPrimary}>
-          {title}
-        </Text>
-        {description && (
-          <Text variant="caption" color={Colors.textSecondary} style={styles.desc}>
-            {description}
-          </Text>
-        )}
-      </View>
-
-      {/* Animated check circle */}
-      <View style={[styles.checkOuter, selected && { borderColor: accentColor }]}>
-        <Animated.View style={[styles.checkInner, { backgroundColor: accentColor }, checkAnim]}>
-          <Text style={styles.checkMark}>✓</Text>
-        </Animated.View>
-      </View>
-    </AnimatedPressable>
+      </Pressable>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
+  animWrap: {
+    width: '100%',
+    marginBottom: 10,
+  },
   card: {
+    width: '100%',
+    backgroundColor: Colors.paper,
+    borderRadius: Radius.lg,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.rule,
+  },
+  // Dedicated row — this is the layout authority. flexDirection:row here
+  // cannot be overridden by the parent Pressable or Animated wrapper.
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.md,
-    padding: Spacing.md,
-    marginBottom: 10,
-    borderWidth: 2,
-    borderColor: '#E8DDD3',
-    ...Shadows.card,
+    flexWrap: 'nowrap',
+    width: '100%',
   },
-  emojiCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: 16,
-    backgroundColor: Colors.cream + '80',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 14,
+  textCol: {
+    flex: 1,
+    flexShrink: 1,
+    minWidth: 0,
   },
-  emoji: { fontSize: 24 },
-  textCol: { flex: 1 },
-  desc: { marginTop: 3, fontSize: 13, lineHeight: 19 },
+  title: {
+    fontFamily: Fonts.display, // Young Serif
+    fontSize: 17,
+    color: Colors.ink,
+    lineHeight: 22,
+  },
+  desc: {
+    fontFamily: Fonts.body,
+    fontSize: 13,
+    lineHeight: 18,
+    color: Colors.inkSoft,
+    marginTop: 3,
+  },
   checkOuter: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    borderWidth: 2.5,
-    borderColor: Colors.creamDark,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: Colors.rule,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: Spacing.sm,
+    marginRight: Spacing.md,
+    flexShrink: 0,
+    flexGrow: 0,
+    flexBasis: 24, // explicit basis so flex can't collapse it
   },
   checkInner: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 12,
+    height: 12,
+    borderRadius: 6,
   },
-  checkMark: { color: '#FFF', fontSize: 10, fontWeight: '800' },
 });

@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary + '12', paddingHorizontal: 10, paddingVertical: 3,
     borderRadius: Radius.pill,
   },
-  countText: { fontSize: 13, fontFamily: 'Nunito-Bold', color: Colors.primary },
+  countText: { fontSize: 13, fontFamily: 'YoungSerif-Regular', color: Colors.primary },
   celebration: {
     alignItems: 'center', backgroundColor: Colors.creamLight,
     borderRadius: Radius.md, padding: Spacing.lg, marginBottom: Spacing.md,

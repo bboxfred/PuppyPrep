@@ -7,7 +7,7 @@
  * Calls generateSchedule() → saves events to store → navigates to tabs.
  */
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, Image, StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -17,6 +17,7 @@ import Animated, {
   withDelay,
   Easing,
   FadeIn,
+  ZoomIn,
   type SharedValue,
 } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
@@ -153,6 +154,15 @@ export default function GeneratingScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Hero illustration — puppy + calendar */}
+      <Animated.View entering={ZoomIn.delay(100).duration(500).springify()} style={styles.heroWrap}>
+        <Image
+          source={require('../../assets/images/generating-calendar.png')}
+          style={styles.heroImage}
+          resizeMode="contain"
+        />
+      </Animated.View>
+
       {/* Bouncing paws */}
       <View style={styles.pawRow}>
         {PAWS.map((paw, i) => (
@@ -189,6 +199,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: Spacing.xl,
+  },
+  heroWrap: {
+    width: 220,
+    height: 220,
+    marginBottom: Spacing.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroImage: {
+    width: '100%',
+    height: '100%',
   },
   pawRow: {
     flexDirection: 'row',

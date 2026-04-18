@@ -24,7 +24,7 @@ export default function Q5VetConfirmed() {
   }, [selected, setVetConfirmed, goNext]);
 
   return (
-    <OnboardingScreen illustration="🏥" heroColor="#2C6E6F"
+    <OnboardingScreen illustrationImage={require("../../assets/images/onboard-vet.png")}
       headline="Has a vet confirmed the pregnancy?"
       subtext="Unconfirmed pregnancies can be false pregnancies."
       onNext={handleContinue} onBack={() => goBack('q5-vet-confirmed')}

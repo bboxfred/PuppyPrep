@@ -15,7 +15,7 @@ export default function Q6FirstLitter() {
   const [selected, setSelected] = useState<boolean | null>(saved);
 
   return (
-    <OnboardingScreen illustration="🐣" heroColor="#5BA3A4"
+    <OnboardingScreen illustrationImage={require("../../assets/images/onboard-first-litter.png")}
       headline="Is this her first litter?"
       subtext="First-time mums sometimes have longer labours and may need more help."
       onNext={() => { setFirstLitter(selected ?? true); goNext('q6-first-litter'); }}

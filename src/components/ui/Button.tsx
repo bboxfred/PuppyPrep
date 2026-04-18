@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, ActivityIndicator, ViewStyle } from 'react-native';
-import { Colors, Radius, Spacing, Shadows } from '@/constants/design-system';
+import { Colors, Radius, Spacing, Shadows, Fonts } from '@/constants/design-system';
 import { Text } from './Text';
 
 type ButtonVariant = 'primary' | 'secondary' | 'danger';
@@ -13,24 +13,35 @@ interface ButtonProps {
   style?: ViewStyle;
 }
 
-const variants: Record<ButtonVariant, { bg: string; bgPressed: string; border: string; text: string }> = {
+/**
+ * Field Journal button rules:
+ * - Pill (radius 999)
+ * - Primary: forest bg, paper text, serif label, the ONE allowed shadow
+ * - Ghost/secondary: 1.5px forest outline, forest label, no shadow
+ * - Danger: critical bg, paper text, no shadow
+ * - Never terracotta fill.
+ */
+const variants: Record<ButtonVariant, { bg: string; bgPressed: string; border: string; text: string; borderWidth: number }> = {
   primary: {
-    bg: Colors.primary,
-    bgPressed: Colors.primaryDark,
-    border: 'transparent',
-    text: '#FFFFFF',
+    bg:        Colors.forest,
+    bgPressed: Colors.forestDeep,
+    border:    'transparent',
+    text:      Colors.paper,
+    borderWidth: 0,
   },
   secondary: {
-    bg: 'transparent',
-    bgPressed: Colors.primary + '08',
-    border: Colors.primary,
-    text: Colors.primary,
+    bg:        'transparent',
+    bgPressed: Colors.forest + '12',
+    border:    Colors.forest,
+    text:      Colors.forest,
+    borderWidth: 1.5,
   },
   danger: {
-    bg: Colors.coral,
-    bgPressed: '#C06058',
-    border: 'transparent',
-    text: '#FFFFFF',
+    bg:        Colors.critical,
+    bgPressed: '#7C2C22',
+    border:    'transparent',
+    text:      Colors.paper,
+    borderWidth: 0,
   },
 };
 
@@ -52,18 +63,19 @@ export function Button({
         styles.base,
         {
           backgroundColor: pressed ? v.bgPressed : v.bg,
-          borderColor: v.border,
-          opacity: disabled ? 0.35 : 1,
-          transform: [{ scale: pressed && !disabled ? 0.96 : 1 }],
+          borderColor:  v.border,
+          borderWidth:  v.borderWidth,
+          opacity:      disabled ? 0.35 : 1,
+          transform:    [{ scale: pressed && !disabled ? 0.97 : 1 }],
         },
-        variant === 'primary' && Shadows.glow,
+        variant === 'primary' && Shadows.primaryButton,
         style,
       ]}
     >
       {loading ? (
         <ActivityIndicator color={v.text} size="small" />
       ) : (
-        <Text variant="body" weight="bold" color={v.text} style={styles.label}>
+        <Text variant="heading" color={v.text} style={styles.label}>
           {title}
         </Text>
       )}
@@ -75,14 +87,14 @@ const styles = StyleSheet.create({
   base: {
     height: 54,
     borderRadius: Radius.pill,
-    borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: Spacing.xl,
   },
+  // Serif label, slight tracking, 17/400 per spec.
   label: {
-    fontSize: 16,
-    fontFamily: 'Nunito-Bold',
+    fontSize: 17,
+    fontFamily: Fonts.display,
     letterSpacing: 0.3,
   },
 });

@@ -34,7 +34,9 @@ export default function Q12Notifications() {
   }, [setNotifPreferences, goNext]);
 
   return (
-    <OnboardingScreen illustration="🔔" heroColor="#5BA3A4"
+    <OnboardingScreen
+      illustrationImage={require("../../assets/images/onboard-bell.png")}
+      illustrationScale={1.125}
       headline="When should we remind you?"
       subtext="Daily summary and alerts before important events."
       onNext={handleContinue} onBack={() => goBack('q12-notifications')}

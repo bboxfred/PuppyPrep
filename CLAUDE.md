@@ -1022,3 +1022,7 @@ and more.
 *End of CLAUDE.md — PuppyCare Compass v1.0*
 *Freddy Lim | fred@collecter.club | claudecode.sg*
 *Last updated: April 2026*
+
+## Design direction
+
+For any visual or styling work, read `handoff/DESIGN_FIELD_JOURNAL.md` and follow its hard constraints (styling-only; do not change routes, settings, data, flows, functional copy, analytics, or accessibility semantics). Machine-readable tokens live at `handoff/tokens.json`.

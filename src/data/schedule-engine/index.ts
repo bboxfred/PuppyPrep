@@ -282,14 +282,23 @@ function buildPregnancyEvents(
   pregnancyTemplates: EventTemplate[],
   anchor: Date,
   dog_id: string,
-  breed_id: string
+  breed_id: string,
+  vet_confirmed: 'ultrasound' | 'exam_only' | 'not_yet' = 'not_yet',
 ): CalendarEvent[] {
   // Filter to negative day offsets (before birth) only
   const prebirthTemplates = pregnancyTemplates.filter(t => {
     const offset = t.week_offset !== undefined
       ? Math.round(t.week_offset * 7)
       : (t.day_offset ?? 0);
-    return offset <= 0;
+    if (offset > 0) return false;
+
+    // Skip "Book vet pregnancy confirmation" if a vet has already
+    // confirmed via ultrasound or an exam — the reminder is redundant.
+    if (vet_confirmed !== 'not_yet' && /book vet pregnancy confirmation/i.test(t.title ?? '')) {
+      return false;
+    }
+
+    return true;
   });
 
   return buildEvents(prebirthTemplates, anchor, dog_id, breed_id);
@@ -454,7 +463,7 @@ export async function generateSchedule(
   // Pregnancy events (only if not yet born)
   const pregnancyEvents = resolveEvents('PREGNANCY_EVENTS');
   if (input.status === 'pregnant' && pregnancyEvents) {
-    allEvents.push(...buildPregnancyEvents(pregnancyEvents, anchor_date, input.dog_id, input.breed_id));
+    allEvents.push(...buildPregnancyEvents(pregnancyEvents, anchor_date, input.dog_id, input.breed_id, input.vet_confirmed));
   }
 
   // Birthing guide events (ALL BREEDS, Days -18 to 0, only if pregnant)
@@ -462,9 +471,12 @@ export async function generateSchedule(
     allEvents.push(...buildBirthingGuideEvents(anchor_date, input.dog_id, input.breed_id));
   }
 
-  // Neonatal events (Day 0–14)
+  // Neonatal / transitional / nutrition / training events (Day 0–56)
+  // ALL postnatal — MUST NOT render when status = 'pregnant'. These are
+  // anchored to the estimated due date which, if overdue, would incorrectly
+  // place Day 0 events in the past even though no puppies exist yet.
   const neonatalEvents = resolveEvents('NEONATAL_EVENTS');
-  if (neonatalEvents) {
+  if (neonatalEvents && input.status === 'born') {
     const postEvents = buildPostnatalEvents(
       neonatalEvents,
       resolveEvents('TRANSITIONAL_EVENTS') ?? [],
@@ -489,8 +501,11 @@ export async function generateSchedule(
     infobase.MIXED_BREED_HEALTH_SCHEDULE ??
     null;
 
-  if (healthSchedule) {
-    // Deworming + vaccines apply to both flows (future events for pregnant, current for born)
+  if (healthSchedule && input.status === 'born') {
+    // Deworming, vaccinations, and vet visits are ALL postnatal events.
+    // They MUST NOT appear when status = 'pregnant' — even if the dog is overdue —
+    // because these events are calculated relative to anchor (due date) and would
+    // show incorrectly on the calendar before the puppies are born.
     if (healthSchedule.deworming) {
       allEvents.push(...buildDewormingEvents(
         healthSchedule.deworming, anchor_date, input.dog_id, input.breed_id
@@ -501,9 +516,7 @@ export async function generateSchedule(
         healthSchedule.vaccinations, anchor_date, input.dog_id, input.breed_id
       ));
     }
-    // Vet visits (post-whelping check, dam follow-up) — BORN ONLY
-    // For pregnant status, the birthing guide handles pre-birth vet events
-    if (healthSchedule.vet_visits && input.status === 'born') {
+    if (healthSchedule.vet_visits) {
       allEvents.push(...buildVetVisitEvents(
         healthSchedule.vet_visits, anchor_date, input.dog_id, input.breed_id
       ));
@@ -580,7 +593,9 @@ export async function generateSchedule(
   allEvents.push(...conditionalEvents);
 
   // ── Step 9: Apply Parson Russell / Russell Terrier overrides ──────────────
+  // Day 168 LOA monitoring is anchored to birth — only render when BORN.
   if (
+    input.status === 'born' &&
     (input.breed_id === 'parson_russell_terrier' || input.breed_id === 'russell_terrier') &&
     infobase.BREED_OVERRIDES
   ) {

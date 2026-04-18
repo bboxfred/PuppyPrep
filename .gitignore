@@ -40,3 +40,25 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Local scratch / artifacts from prior sessions
+puppyplogo.png
+puppyprep logo.psd
+DESIGN_FIELD_JOURNAL.md
+PROMPT.md
+tokens.json
+
+# Debug screenshots at repo root — local testing artifacts only.
+# Keep /assets/images out of this rule — that's product assets.
+/fix*.png
+/field-*.png
+/preview-*.png
+/fix-*.png
+
+# Local testing + tool scratch space
+.playwright-mcp/
+Logo/
+
+# Raw intermediate image generation outputs.
+# Final, stripped versions live in assets/images/ and ARE committed.
+assets/generated/

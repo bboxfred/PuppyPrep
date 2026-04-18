@@ -39,8 +39,7 @@ export default function Q3MatingKnown() {
 
   return (
     <OnboardingScreen
-      illustration="📅"
-      heroColor="#2C6E6F"
+      illustrationImage={require('../../assets/images/onboard-calendar.png')}
       headline="Do you know when she was mated?"
       subtext="The mating date lets us calculate your due date and build your pregnancy timeline."
       onNext={!showBlocked ? handleContinue : undefined}

@@ -6,14 +6,12 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet, View, ActivityIndicator } from 'react-native';
 import * as Font from 'expo-font';
 import * as Notifications from 'expo-notifications';
+// ── Field Journal fonts ──
+import { YoungSerif_400Regular } from '@expo-google-fonts/young-serif';
 import {
-  Nunito_400Regular, Nunito_500Medium, Nunito_600SemiBold,
-  Nunito_700Bold, Nunito_800ExtraBold,
-} from '@expo-google-fonts/nunito';
-import {
-  Quicksand_400Regular, Quicksand_500Medium,
-  Quicksand_600SemiBold, Quicksand_700Bold,
-} from '@expo-google-fonts/quicksand';
+  DMSans_400Regular, DMSans_500Medium,
+  DMSans_600SemiBold, DMSans_700Bold,
+} from '@expo-google-fonts/dm-sans';
 
 // ── Notification handler — runs when notification received while app is foregrounded ──
 Notifications.setNotificationHandler({
@@ -36,18 +34,15 @@ export default function RootLayout() {
   const router = useRouter();
   const notificationResponseListener = useRef<Notifications.EventSubscription | null>(null);
 
-  // Load fonts
+  // Load Field Journal fonts (Young Serif + DM Sans). All references to legacy
+  // Nunito / Quicksand names were swept to the new names in a prior step.
   useEffect(() => {
     Font.loadAsync({
-      'Nunito-Regular': Nunito_400Regular,
-      'Nunito-Medium': Nunito_500Medium,
-      'Nunito-SemiBold': Nunito_600SemiBold,
-      'Nunito-Bold': Nunito_700Bold,
-      'Nunito-ExtraBold': Nunito_800ExtraBold,
-      'Quicksand-Regular': Quicksand_400Regular,
-      'Quicksand-Medium': Quicksand_500Medium,
-      'Quicksand-SemiBold': Quicksand_600SemiBold,
-      'Quicksand-Bold': Quicksand_700Bold,
+      'YoungSerif-Regular': YoungSerif_400Regular,
+      'DMSans-Regular':    DMSans_400Regular,
+      'DMSans-Medium':     DMSans_500Medium,
+      'DMSans-SemiBold':   DMSans_600SemiBold,
+      'DMSans-Bold':       DMSans_700Bold,
     }).then(() => setFontsLoaded(true));
   }, []);
 
@@ -86,18 +81,18 @@ export default function RootLayout() {
   if (!fontsLoaded) {
     return (
       <View style={styles.loading}>
-        <ActivityIndicator size="large" color="#2C6E6F" />
+        <ActivityIndicator size="large" color="#2D4A32" />
       </View>
     );
   }
 
   return (
     <GestureHandlerRootView style={styles.root}>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: '#F5F0EB' },
+          contentStyle: { backgroundColor: '#F5EDE0' },
           animation: 'slide_from_right',
         }}
       />
@@ -107,5 +102,5 @@ export default function RootLayout() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  loading: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#1A3C3D' },
+  loading: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F5EDE0' },
 });

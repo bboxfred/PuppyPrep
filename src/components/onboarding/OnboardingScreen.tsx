@@ -1,17 +1,19 @@
 /**
- * ONBOARDING SCREEN — Premium design with depth and animation
+ * ONBOARDING SCREEN — Field Journal editorial layout
  *
- * - Gradient hero with animated illustration bubble
- * - Content card slides up over the hero with rounded corners
- * - Bottom bar with Back + Next (cream pill button)
- * - Staggered entrance animations
+ * Paper background throughout. No gradient hero, no translucent bubble.
+ * Optional top illustration (brand mascot) sits directly on the paper.
+ * Title in Young Serif, subtext in DM Sans italic lede. Body content is a
+ * simple flowing column with dot-rule separation where needed.
+ *
+ * Props and behaviour are unchanged from the previous visual design so every
+ * existing caller works without edits. Only the rendering changes.
  */
-import { View, ScrollView, Pressable, StyleSheet } from 'react-native';
-import Animated, { FadeInDown, FadeInUp, FadeIn, ZoomIn } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, ScrollView, Pressable, Image, StyleSheet, type ImageSourcePropType } from 'react-native';
+import Animated, { FadeInDown, FadeInUp, FadeIn } from 'react-native-reanimated';
 import { ArrowLeft, ArrowRight } from 'lucide-react-native';
 import { Text } from '@/components/ui/Text';
-import { Colors, Spacing, Radius, Shadows } from '@/constants/design-system';
+import { Colors, Spacing, Radius, Shadows, Fonts } from '@/constants/design-system';
 
 interface OnboardingScreenProps {
   headline: string;
@@ -19,7 +21,23 @@ interface OnboardingScreenProps {
   children: React.ReactNode;
   skipLabel?: string;
   onSkip?: () => void;
+  /** Emoji string for legacy / simple screens (Field Journal direction hides emojis) */
   illustration?: string;
+  /** Full illustration image. Use require('../../assets/images/...') */
+  illustrationImage?: ImageSourcePropType;
+  /**
+   * Per-screen scale override for the illustration. Default = 1.25.
+   * Use values <1 to shrink, >1 to zoom in further. Useful when a specific
+   * image has unusual composition (lots of whitespace, or subject is
+   * naturally oversized).
+   */
+  illustrationScale?: number;
+  /**
+   * Per-screen frame height override. Default = 200. Bump to allow a taller
+   * illustration area without clipping.
+   */
+  illustrationFrameHeight?: number;
+  /** @deprecated Field Journal has a single paper canvas — this prop is ignored. */
   heroColor?: string;
   onNext?: () => void;
   onBack?: () => void;
@@ -35,17 +53,15 @@ export function OnboardingScreen({
   skipLabel,
   onSkip,
   illustration,
-  heroColor = Colors.primary,
+  illustrationImage,
+  illustrationScale = 1.25,
+  illustrationFrameHeight = 200,
   onNext,
   onBack,
   nextDisabled = false,
   nextLabel = 'Next',
   hideBottomBar = false,
 }: OnboardingScreenProps) {
-  // Compute gradient colors from hero base
-  const gradientDark = heroColor + 'E6';  // slightly transparent
-  const gradientLight = heroColor + '99';
-
   return (
     <View style={styles.container}>
       <ScrollView
@@ -54,62 +70,64 @@ export function OnboardingScreen({
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* ── HERO with gradient ── */}
-        <LinearGradient
-          colors={[heroColor, gradientLight, heroColor]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.hero}
-        >
-          {/* Decorative floating circles */}
-          <View style={[styles.floatCircle, styles.circle1]} />
-          <View style={[styles.floatCircle, styles.circle2]} />
-          <View style={[styles.floatCircle, styles.circle3]} />
-
-          {/* Animated illustration bubble */}
-          {illustration && (
-            <Animated.View entering={ZoomIn.delay(150).duration(400).springify()} style={styles.illustrationBubble}>
-              <Text style={styles.illustrationEmoji}>{illustration}</Text>
-            </Animated.View>
-          )}
-
-          {/* Title on hero */}
-          <Animated.View entering={FadeInUp.delay(200).duration(500)}>
-            <Text style={styles.heroTitle}>{headline}</Text>
+        {/* Optional illustration — sits directly on paper, no bubble, no gradient.
+            Per-screen scale + frame-height overrides so each question can dial in
+            its own composition (bell smaller, weigh bigger, etc). */}
+        {illustrationImage ? (
+          <Animated.View
+            entering={FadeIn.delay(80).duration(320)}
+            style={[styles.illustrationImageWrap, { height: illustrationFrameHeight }]}
+          >
+            <Image
+              source={illustrationImage}
+              style={[styles.illustrationImage, { transform: [{ scale: illustrationScale }] }]}
+              resizeMode="contain"
+            />
           </Animated.View>
-
-          <Animated.View entering={FadeInUp.delay(350).duration(500)}>
-            <Text style={styles.heroSubtext}>{subtext}</Text>
+        ) : illustration ? (
+          // Legacy emoji — still supported but rendered plain (no bubble).
+          <Animated.View entering={FadeIn.delay(80).duration(320)} style={styles.emojiWrap}>
+            <Text style={styles.illustrationEmoji}>{illustration}</Text>
           </Animated.View>
-        </LinearGradient>
+        ) : null}
 
-        {/* ── CONTENT CARD — overlaps hero ── */}
-        <Animated.View entering={FadeInDown.delay(300).duration(500)} style={styles.contentCard}>
+        {/* Headline — Young Serif */}
+        <Animated.View entering={FadeInUp.delay(120).duration(360)}>
+          <Text style={styles.headline}>{headline}</Text>
+        </Animated.View>
+
+        {/* Subtext — DM Sans italic lede */}
+        <Animated.View entering={FadeInUp.delay(200).duration(360)}>
+          <Text style={styles.lede}>{subtext}</Text>
+        </Animated.View>
+
+        {/* Content */}
+        <Animated.View entering={FadeInDown.delay(260).duration(400)} style={styles.content}>
           {children}
         </Animated.View>
       </ScrollView>
 
-      {/* ── BOTTOM BAR ── */}
+      {/* BOTTOM BAR */}
       {!hideBottomBar && (
-        <Animated.View entering={FadeIn.delay(500).duration(400)} style={styles.bottomBar}>
+        <Animated.View entering={FadeIn.delay(320).duration(320)} style={styles.bottomBar}>
           {/* Back */}
           {onBack ? (
             <Pressable onPress={onBack} style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}>
-              <ArrowLeft size={18} color={Colors.primary} strokeWidth={2.5} />
-              <Text variant="body" weight="semibold" color={Colors.primary}>Back</Text>
+              <ArrowLeft size={18} color={Colors.forest} strokeWidth={1.75} />
+              <Text color={Colors.forest} style={styles.backLabel}>Back</Text>
             </Pressable>
           ) : (
-            <View style={{ width: 80 }} />
+            <View style={{ width: 100 }} />
           )}
 
-          {/* Skip */}
+          {/* Skip (caption style) */}
           {skipLabel && onSkip && (
             <Pressable onPress={onSkip} style={styles.skipBtn}>
-              <Text variant="caption" color={Colors.textSecondary}>{skipLabel}</Text>
+              <Text color={Colors.inkFaint} style={styles.skipLabel}>{skipLabel}</Text>
             </Pressable>
           )}
 
-          {/* Next — cream pill with shadow */}
+          {/* Next — forest primary pill (the ONE shadow allowed) */}
           {onNext && (
             <Pressable
               onPress={onNext}
@@ -117,11 +135,11 @@ export function OnboardingScreen({
               style={({ pressed }) => [
                 styles.nextBtn,
                 nextDisabled && { opacity: 0.35 },
-                pressed && !nextDisabled && { transform: [{ scale: 0.95 }] },
+                pressed && !nextDisabled && { transform: [{ scale: 0.97 }] },
               ]}
             >
-              <Text variant="body" weight="bold" color={Colors.textOnCream}>{nextLabel}</Text>
-              <ArrowRight size={18} color={Colors.textOnCream} strokeWidth={2.5} />
+              <Text color={Colors.paper} style={styles.nextLabel}>{nextLabel}</Text>
+              <ArrowRight size={18} color={Colors.paper} strokeWidth={1.75} />
             </Pressable>
           )}
         </Animated.View>
@@ -133,84 +151,81 @@ export function OnboardingScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.paper,
   },
   scroll: { flex: 1 },
-  scrollContent: { paddingBottom: Spacing.xl },
-
-  // ── Hero ──
-  hero: {
-    paddingTop: Spacing.lg,
-    paddingBottom: Spacing['2xl'] + Spacing.md,
+  scrollContent: {
+    // Cap content width on tablet/desktop so forms, inputs, and illustrations
+    // stay at a comfortable phone-ish reading width instead of stretching.
+    width: '100%',
+    maxWidth: 520,
+    alignSelf: 'center',
     paddingHorizontal: Spacing.lg,
-    position: 'relative',
-    overflow: 'hidden',
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.xl,
   },
-  floatCircle: {
-    position: 'absolute',
-    backgroundColor: '#FFFFFF12',
-    borderWidth: 1,
-    borderColor: '#FFFFFF08',
-  },
-  circle1: { width: 200, height: 200, borderRadius: 100, top: -60, right: -40 },
-  circle2: { width: 120, height: 120, borderRadius: 60, bottom: 30, left: -30 },
-  circle3: { width: 80, height: 80, borderRadius: 40, top: 20, right: 40, backgroundColor: '#FFFFFF08' },
 
-  illustrationBubble: {
-    width: 68,
-    height: 68,
-    borderRadius: 22,
-    backgroundColor: '#FFFFFF30',
-    borderWidth: 1.5,
-    borderColor: '#FFFFFF20',
+  // Illustration — paper, no bubble, no shadow. Wrapper has overflow:hidden
+  // and the image is scaled 30% so the subject fills the frame and any
+  // residual paper margin / vignette is cropped off.
+  illustrationImageWrap: {
+    width: '100%',
+    // height is now overridable per-screen via `illustrationFrameHeight`.
+    // Margins tightened from previous (sm + md) to (xs + sm) to reduce
+    // dead negative space above and below the subject.
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: Spacing.md,
-    // Glass effect shadow
-    ...Shadows.glow,
-    shadowColor: '#FFFFFF',
-    shadowOpacity: 0.15,
+    marginTop: Spacing.xs,
+    marginBottom: Spacing.sm,
+    overflow: 'hidden',
   },
-  illustrationEmoji: { fontSize: 32 },
-  heroTitle: {
-    fontFamily: 'Nunito-ExtraBold',
-    fontSize: 27,
-    color: '#FFFFFF',
-    lineHeight: 35,
-    letterSpacing: -0.3,
+  illustrationImage: {
+    width: 220,
+    height: 220,
+    // `transform: [{ scale }]` is now applied inline by the component from
+    // the `illustrationScale` prop so each screen can override.
+  },
+  emojiWrap: {
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+  },
+  illustrationEmoji: {
+    fontSize: 52,
+  },
+
+  // Typography
+  headline: {
+    fontFamily: Fonts.display, // Young Serif
+    fontSize: 28,
+    lineHeight: 32,
+    letterSpacing: -0.4,
+    color: Colors.ink,
     marginBottom: Spacing.sm,
   },
-  heroSubtext: {
-    fontFamily: 'Quicksand-Medium',
-    fontSize: 14,
-    color: '#FFFFFFB8',
-    lineHeight: 22,
+  lede: {
+    fontFamily: Fonts.display, // Young Serif italic
+    fontStyle: 'italic',
+    fontSize: 17,
+    lineHeight: 26,
+    color: Colors.inkSoft,
+    marginBottom: Spacing.lg,
   },
 
-  // ── Content card ──
-  contentCard: {
-    backgroundColor: Colors.surface,
-    marginTop: -Spacing.lg,
-    borderTopLeftRadius: Radius.lg,
-    borderTopRightRadius: Radius.lg,
-    paddingTop: Spacing.lg + 4,
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.lg,
-    minHeight: 320,
-    // Card shadow for depth
-    ...Shadows.elevated,
+  // Body content
+  content: {
+    marginTop: Spacing.xs,
   },
 
-  // ── Bottom bar — two buttons side by side, full width ──
+  // Bottom bar — paper with hairline top
   bottomBar: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.paper,
     borderTopWidth: 1,
-    borderTopColor: Colors.creamDark + '50',
+    borderTopColor: Colors.rule,
   },
   backBtn: {
     flexDirection: 'row',
@@ -220,14 +235,22 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: Spacing.md,
     borderRadius: Radius.pill,
-    borderWidth: 2,
-    borderColor: Colors.creamDark,
-    backgroundColor: Colors.surface,
+    borderWidth: 1.5,
+    borderColor: Colors.forest,
+    backgroundColor: 'transparent',
     minWidth: 100,
+  },
+  backLabel: {
+    fontFamily: Fonts.bodySemi,
+    fontSize: 14,
   },
   skipBtn: {
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
+  },
+  skipLabel: {
+    fontFamily: Fonts.body,
+    fontSize: 13,
   },
   nextBtn: {
     flex: 1,
@@ -235,11 +258,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: Colors.cream,
+    backgroundColor: Colors.forest,
     paddingVertical: 14,
     borderRadius: Radius.pill,
-    ...Shadows.card,
-    shadowColor: Colors.peach,
-    shadowOpacity: 0.2,
+    ...Shadows.primaryButton, // the ONE allowed elevation
+  },
+  nextLabel: {
+    fontFamily: Fonts.display, // Young Serif label per spec
+    fontSize: 17,
+    letterSpacing: 0.3,
   },
 });

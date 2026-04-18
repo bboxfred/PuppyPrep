@@ -32,7 +32,7 @@ export default function Q11BirthDate() {
   }, [isToday, confirmed, selectedDate, setBirthDate, goNext]);
 
   return (
-    <OnboardingScreen illustration="📅" heroColor="#2C6E6F"
+    <OnboardingScreen illustrationImage={require("../../assets/images/onboard-cake.png")}
       headline="When were the puppies born?"
       subtext="Deworming starts Day 14, eyes open Day 12, first vet visit Week 6."
       onNext={handleContinue} onBack={() => goBack('q11-birth-date')}

@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
   rangeTrack: { height: 8, backgroundColor: Colors.creamDark + '30', borderRadius: 4, overflow: 'hidden' },
   rangeFill: { position: 'absolute', left: '25%', right: '15%', height: 8, backgroundColor: Colors.primary + '30', borderRadius: 4 },
   rangeLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
-  rangeLabel: { fontSize: 11, fontFamily: 'Quicksand-Medium', color: Colors.textSecondary },
+  rangeLabel: { fontSize: 11, fontFamily: 'DMSans-Medium', color: Colors.textSecondary },
   addBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.sm,
     backgroundColor: Colors.primary + '08', borderRadius: Radius.md,
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
   tempInputField: {
     flex: 1, backgroundColor: Colors.background, borderRadius: Radius.sm,
     paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
-    fontSize: 24, fontFamily: 'Nunito-Bold', color: Colors.textPrimary, textAlign: 'center',
+    fontSize: 24, fontFamily: 'YoungSerif-Regular', color: Colors.textPrimary, textAlign: 'center',
     borderWidth: 1, borderColor: Colors.creamDark,
   },
   inputActions: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: Spacing.lg, marginTop: Spacing.md },
@@ -195,6 +195,6 @@ const styles = StyleSheet.create({
   readingLow: { borderColor: '#D4726A40', backgroundColor: '#D4726A06' },
   readingHigh: { borderColor: '#D4726A40', backgroundColor: '#D4726A06' },
   readingTime: { flex: 1 },
-  alertBadge: { fontSize: 9, fontFamily: 'Nunito-Bold', color: '#D4726A', backgroundColor: '#D4726A15', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
+  alertBadge: { fontSize: 9, fontFamily: 'YoungSerif-Regular', color: '#D4726A', backgroundColor: '#D4726A15', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
   emptyText: { textAlign: 'center', marginTop: Spacing.xl },
 });

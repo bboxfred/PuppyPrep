@@ -1,4 +1,4 @@
-import { Text as RNText, TextProps as RNTextProps, TextStyle } from 'react-native';
+import { Text as RNText, TextProps as RNTextProps } from 'react-native';
 import { Colors, Fonts, FontSizes } from '@/constants/design-system';
 
 type TextVariant = 'display' | 'heading' | 'subheading' | 'body' | 'caption' | 'mono';
@@ -10,37 +10,37 @@ interface TextProps extends RNTextProps {
 }
 
 /**
- * Font family mapping — uses loaded Google Fonts.
- * Nunito for display/headings (warm, rounded, distinctive).
- * Quicksand for body/captions (geometric, clean, modern).
+ * Field Journal typography:
+ *   display/heading → Young Serif (serif, literary)
+ *   subheading/body/caption → DM Sans (clean, modern)
+ *   Never mix: serif only on titles, sans only on body.
+ *
+ * Young Serif only ships as 400 Regular, so weight prop is ignored for display/heading
+ * (serif weight variance comes from size, not font file).
  */
-const variantMap: Record<TextVariant, { fontFamily: string; fontSize: number; color: string }> = {
-  display:    { fontFamily: Fonts.display,    fontSize: FontSizes['3xl'], color: Colors.textPrimary },
-  heading:    { fontFamily: Fonts.heading,    fontSize: FontSizes.xl,     color: Colors.textPrimary },
-  subheading: { fontFamily: Fonts.subheading, fontSize: FontSizes.lg,     color: Colors.textPrimary },
-  body:       { fontFamily: Fonts.body,       fontSize: FontSizes.base,   color: Colors.textPrimary },
-  caption:    { fontFamily: Fonts.caption,    fontSize: FontSizes.sm,     color: Colors.textSecondary },
-  mono:       { fontFamily: Fonts.mono,       fontSize: FontSizes.sm,     color: Colors.textPrimary },
+const variantMap: Record<TextVariant, { fontFamily: string; fontSize: number; color: string; isSerif: boolean }> = {
+  display:    { fontFamily: Fonts.display,    fontSize: FontSizes['3xl'], color: Colors.textPrimary,   isSerif: true  },
+  heading:    { fontFamily: Fonts.heading,    fontSize: FontSizes.xl,     color: Colors.textPrimary,   isSerif: true  },
+  subheading: { fontFamily: Fonts.bodySemi,   fontSize: FontSizes.lg,     color: Colors.textPrimary,   isSerif: false },
+  body:       { fontFamily: Fonts.body,       fontSize: FontSizes.base,   color: Colors.textPrimary,   isSerif: false },
+  caption:    { fontFamily: Fonts.caption,    fontSize: FontSizes.sm,     color: Colors.textSecondary, isSerif: false },
+  mono:       { fontFamily: Fonts.mono,       fontSize: FontSizes.sm,     color: Colors.textPrimary,   isSerif: false },
 };
 
-/** Maps weight names to specific font files (Nunito for headings, Quicksand for body) */
-const weightToNunito: Record<string, string> = {
-  regular: 'Nunito-Regular', medium: 'Nunito-Medium', semibold: 'Nunito-SemiBold',
-  bold: 'Nunito-Bold', heavy: 'Nunito-ExtraBold',
-};
-const weightToQuicksand: Record<string, string> = {
-  regular: 'Quicksand-Regular', medium: 'Quicksand-Medium', semibold: 'Quicksand-SemiBold',
-  bold: 'Quicksand-Bold', heavy: 'Quicksand-Bold',
+/** Map weight names to DM Sans file names. Young Serif ignores weight (only ships Regular). */
+const dmSansWeight: Record<string, string> = {
+  regular:  'DMSans-Regular',
+  medium:   'DMSans-Medium',
+  semibold: 'DMSans-SemiBold',
+  bold:     'DMSans-Bold',
+  heavy:    'DMSans-Bold',
 };
 
 function resolveFont(variant: TextVariant, weight?: string): string {
-  const base = variantMap[variant].fontFamily;
-  if (!weight) return base;
-
-  // Determine which family this variant uses
-  const isNunito = base.startsWith('Nunito');
-  const map = isNunito ? weightToNunito : weightToQuicksand;
-  return map[weight] ?? base;
+  const base = variantMap[variant];
+  if (base.isSerif) return base.fontFamily; // Young Serif has only Regular
+  if (!weight) return base.fontFamily;
+  return dmSansWeight[weight] ?? base.fontFamily;
 }
 
 export function Text({ variant = 'body', weight, color, style, ...props }: TextProps) {

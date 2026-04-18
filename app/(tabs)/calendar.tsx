@@ -8,10 +8,13 @@ import { View, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { Calendar, type DateData } from 'react-native-calendars';
 import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { Text } from '@/components/ui/Text';
-import { DayBottomSheet } from '@/components/calendar/DayBottomSheet';
+import { EventCard } from '@/components/calendar/EventCard';
+// DayBottomSheet no longer used — tasks are now shown inline on the calendar page.
 import { Colors, Spacing, Radius, Fonts } from '@/constants/design-system';
 import { useCalendarStore } from '@/store/useCalendarStore';
+import { sortByPriority, formatDateDisplay } from '@/utils/calendar-helpers';
 import {
   toDateKey,
   groupEventsByDate,
@@ -26,6 +29,9 @@ const DAYS_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
 export default function CalendarScreen() {
   const events = useCalendarStore((s) => s.events);
+  const markCompleted = useCalendarStore((s) => s.markCompleted);
+  const markUncompleted = useCalendarStore((s) => s.markUncompleted);
+  const router = useRouter();
   const today = todayKey();
 
   const [selectedDate, setSelectedDate] = useState<string>(today);
@@ -33,7 +39,6 @@ export default function CalendarScreen() {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
-  const [sheetOpen, setSheetOpen] = useState(false);
 
   // Group events by date for the calendar markers
   const eventsByDate = useMemo(() => groupEventsByDate(events), [events]);
@@ -65,17 +70,17 @@ export default function CalendarScreen() {
       };
     }
 
-    // Today ring
+    // Today ring — the grey highlight already signals "today", so we strip
+    // any dots for this date to keep it clean.
     if (!marks[today]) marks[today] = {};
     marks[today].today = true;
+    marks[today].dots = [];
+    marks[today].marked = false;
 
     return marks;
   }, [eventsByDate, selectedDate, today]);
 
-  // Events for selected day
-  const selectedEvents = useMemo(() => {
-    return eventsByDate.get(selectedDate) ?? [];
-  }, [eventsByDate, selectedDate]);
+  // (selected-day events now computed inline as `selectedDayEvents` below)
 
   // Month event count
   const monthEventCount = useMemo(() => {
@@ -88,7 +93,6 @@ export default function CalendarScreen() {
 
   const handleDayPress = useCallback((day: DateData) => {
     setSelectedDate(day.dateString);
-    setSheetOpen(true);
   }, []);
 
   const handleGoToToday = useCallback(() => {
@@ -97,12 +101,47 @@ export default function CalendarScreen() {
     setSelectedDate(today);
   }, [today]);
 
-  // Week strip: 7 days centered on selected date
+  // Shift the selected day by ±N days. Also updates currentMonth if we
+  // cross a month boundary so the month grid below follows along.
+  const shiftDay = useCallback((delta: number) => {
+    const current = new Date(selectedDate + 'T00:00:00');
+    current.setDate(current.getDate() + delta);
+    const newKey = toDateKey(current);
+    setSelectedDate(newKey);
+    const m = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}`;
+    if (m !== currentMonth) setCurrentMonth(m);
+  }, [selectedDate, currentMonth]);
+
+  // Events for the selected day, sorted by priority
+  const selectedDayEvents = useMemo(
+    () => sortByPriority(eventsByDate.get(selectedDate) ?? []),
+    [eventsByDate, selectedDate]
+  );
+
+  const selectedDateObj = useMemo(
+    () => new Date(selectedDate + 'T00:00:00'),
+    [selectedDate]
+  );
+
+  const handleEventPress = useCallback((eventId: string) => {
+    router.push(`/event/${eventId}` as any);
+  }, [router]);
+
+  const handleToggleComplete = useCallback((eventId: string, currentlyCompleted: boolean) => {
+    if (currentlyCompleted) markUncompleted(eventId);
+    else markCompleted(eventId);
+  }, [markCompleted, markUncompleted]);
+
+  // Week strip: 7 days — Monday-first (matches month view firstDay={1}).
+  // getDay() returns 0=Sun, 1=Mon, ..., 6=Sat. Offset to Monday:
+  //   Sunday (0)   → go back 6 days (to previous Monday)
+  //   Others (1-6) → go back dayOfWeek - 1 days
   const weekDays = useMemo(() => {
     const center = new Date(selectedDate + 'T00:00:00');
     const dayOfWeek = center.getDay();
+    const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
     const startOfWeek = new Date(center);
-    startOfWeek.setDate(center.getDate() - dayOfWeek);
+    startOfWeek.setDate(center.getDate() - mondayOffset);
 
     return Array.from({ length: 7 }, (_, i) => {
       const d = new Date(startOfWeek);
@@ -179,13 +218,49 @@ export default function CalendarScreen() {
           ))}
         </ScrollView>
 
-        {/* ── Month Calendar ── */}
+        {/* ── SELECTED DAY TASK LIST ── */}
+        {/* Arrows flank the task area directly. No date header above — the week
+            strip already shows which day is selected. Arrows are bare chevrons
+            (no circular background) per feedback. */}
+        <View style={styles.dayRow}>
+          <Pressable onPress={() => shiftDay(-1)} style={styles.arrowBtn} hitSlop={14}>
+            <ChevronLeft size={28} color={Colors.forest} strokeWidth={1.75} />
+          </Pressable>
+          <ScrollView
+            style={styles.daySection}
+            contentContainerStyle={styles.daySectionContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {selectedDayEvents.length === 0 ? (
+              <View style={styles.emptyDayCard}>
+                <Text style={styles.emptyDayTitle}>No tasks this day</Text>
+                <Text style={styles.emptyDaySub}>Tap the arrows to see another day, or pick a date from the calendar below.</Text>
+              </View>
+            ) : (
+              selectedDayEvents.map((event) => (
+                <EventCard
+                  key={event.id}
+                  event={event}
+                  onPress={() => handleEventPress(event.id)}
+                  onToggleComplete={() => handleToggleComplete(event.id, event.completed)}
+                />
+              ))
+            )}
+          </ScrollView>
+          <Pressable onPress={() => shiftDay(1)} style={styles.arrowBtn} hitSlop={14}>
+            <ChevronRight size={28} color={Colors.forest} strokeWidth={1.75} />
+          </Pressable>
+        </View>
+
+        {/* ── Month Calendar — at the bottom, tap any day to select it ── */}
+        <View style={styles.calendarWrap}>
         <Calendar
           current={`${currentMonth}-01`}
           onDayPress={handleDayPress}
           onMonthChange={(month) => setCurrentMonth(`${month.year}-${String(month.month).padStart(2, '0')}`)}
           markedDates={markedDates}
           markingType="multi-dot"
+          firstDay={1}
           hideArrows={false}
           renderArrow={(direction) => (
             direction === 'left'
@@ -202,23 +277,16 @@ export default function CalendarScreen() {
             dayTextColor: Colors.textPrimary,
             textDisabledColor: Colors.textLight,
             monthTextColor: Colors.textPrimary,
-            textDayFontFamily: 'Quicksand-Medium',
-            textMonthFontFamily: 'Nunito-Bold',
-            textDayHeaderFontFamily: 'Quicksand-Medium',
+            textDayFontFamily: 'DMSans-Medium',
+            textMonthFontFamily: 'YoungSerif-Regular',
+            textDayHeaderFontFamily: 'DMSans-Medium',
             textDayFontSize: 15,
-            textMonthFontSize: 0, // Hide built-in month header (we have our own)
+            textMonthFontSize: 0,
             textDayHeaderFontSize: 12,
           }}
           style={styles.calendar}
         />
-
-        {/* ── Day Bottom Sheet ── */}
-        <DayBottomSheet
-          visible={sheetOpen}
-          selectedDate={new Date(selectedDate + 'T00:00:00')}
-          events={selectedEvents}
-          onClose={() => setSheetOpen(false)}
-        />
+        </View>
       </SafeAreaView>
   );
 }
@@ -256,21 +324,27 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
   },
 
-  // Week strip
+  // Week strip — compact top-aligned row. Explicit height keeps the
+  // horizontal ScrollView from filling the viewport on web.
   weekStrip: {
+    height: 74,
+    flexGrow: 0,
+    flexShrink: 0,
     backgroundColor: Colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.creamDark + '30',
+    borderBottomColor: Colors.rule,
   },
   weekStripContent: {
     paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.sm,
+    paddingTop: Spacing.xs,
+    paddingBottom: Spacing.sm,
     gap: 6,
+    alignItems: 'flex-start',
   },
   weekDay: {
     width: 48,
     alignItems: 'center',
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.xs,
     borderRadius: Radius.sm,
   },
   weekDaySelected: {
@@ -284,11 +358,66 @@ const styles = StyleSheet.create({
   weekDots: { flexDirection: 'row', gap: 3, marginTop: 4, height: 6 },
   weekDot: { width: 5, height: 5, borderRadius: 3 },
 
-  // Calendar
-  calendar: {
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.creamDark + '20',
+  // Day row — arrows flank the task area. `alignItems: 'center'` vertically
+  // centers both the arrows and the task content in the available space.
+  dayRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.paper,
   },
+  arrowBtn: {
+    width: 40,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    // No circle, no background, no border — just a bare chevron.
+  },
+  daySection: {
+    flex: 1,
+    // Don't let the ScrollView expand to fill height; let the content
+    // dictate height so the whole row can be vertically centered by the
+    // parent `alignItems: 'center'`.
+    maxHeight: '100%',
+  },
+  daySectionContent: {
+    paddingHorizontal: 4,
+    paddingVertical: Spacing.xs + 2,
+    // flexGrow:1 plus justifyContent:center centers small content vertically
+    // when there's only one task card (or the empty-state card).
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
+  emptyDayCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    borderColor: Colors.rule,
+    padding: Spacing.lg,
+    alignItems: 'center',
+    marginTop: Spacing.sm,
+  },
+  emptyDayTitle: {
+    fontFamily: Fonts.display,
+    fontSize: 17,
+    color: Colors.ink,
+    marginBottom: 4,
+  },
+  emptyDaySub: {
+    fontFamily: Fonts.body,
+    fontSize: 13,
+    color: Colors.inkSoft,
+    textAlign: 'center',
+    lineHeight: 19,
+  },
+
+  // Month Calendar — now pinned at the bottom of the screen (not flexed).
+  calendarWrap: {
+    backgroundColor: Colors.surface,
+    borderTopWidth: 1,
+    borderTopColor: Colors.rule,
+  },
+  calendar: {},
 
   // Empty state (no events at all)
   emptyAll: {

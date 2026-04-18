@@ -72,7 +72,7 @@ export default function Q1Breed() {
 
   return (
     <OnboardingScreen
-      illustration="🐕"
+      illustrationImage={require('../../assets/images/puppyprep-logo.png')}
       headline="What breed is your dog?"
       subtext="This changes feeding amounts, health risks, and what to watch for."
       onNext={handleContinue}

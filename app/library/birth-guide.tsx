@@ -22,10 +22,8 @@ export default function BirthGuideScreen() {
         <Pressable onPress={() => router.back()} style={styles.backBtn} hitSlop={12}>
           <ArrowLeft size={22} color={Colors.textPrimary} strokeWidth={2.5} />
         </Pressable>
-        <Text variant="heading" weight="bold">🐣 Birth Guide</Text>
-        <View style={styles.freePill}>
-          <Text style={styles.freeLabel}>ALWAYS FREE</Text>
-        </View>
+        {/* Field Journal: no emoji, no "always free" pill — title alone */}
+        <Text variant="heading" weight="bold">Birth Guide</Text>
       </View>
 
       <FlatList
@@ -76,7 +74,7 @@ export default function BirthGuideScreen() {
             onPress={() => router.push(`/library/article-${item.id}` as any)}
             style={({ pressed }) => [styles.sectionCard, pressed && { opacity: 0.85 }]}
           >
-            <Text style={styles.sectionEmoji}>{item.emoji}</Text>
+            {/* Field Journal direction: no emoji — title only */}
             <View style={styles.sectionText}>
               <Text variant="body" weight="bold">{item.title}</Text>
               <Text variant="caption" color={Colors.textSecondary} numberOfLines={2}>{item.summary}</Text>
@@ -97,7 +95,7 @@ const styles = StyleSheet.create({
   },
   backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.background, alignItems: 'center', justifyContent: 'center' },
   freePill: { marginLeft: 'auto', backgroundColor: Colors.primary + '12', paddingHorizontal: 10, paddingVertical: 3, borderRadius: Radius.pill },
-  freeLabel: { fontSize: 10, fontFamily: 'Nunito-Bold', color: Colors.primary, letterSpacing: 0.5 },
+  freeLabel: { fontSize: 10, fontFamily: 'YoungSerif-Regular', color: Colors.primary, letterSpacing: 0.5 },
   listContent: { padding: Spacing.lg },
 
   // Three numbers card
@@ -112,8 +110,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
-  numberText: { fontFamily: 'Nunito-ExtraBold', fontSize: 18, color: '#FFF', lineHeight: 22 },
-  numberUnit: { fontFamily: 'Quicksand-Medium', fontSize: 10, color: '#FFFFFFC0' },
+  numberText: { fontFamily: 'YoungSerif-Regular', fontSize: 18, color: '#FFF', lineHeight: 22 },
+  numberUnit: { fontFamily: 'DMSans-Medium', fontSize: 10, color: '#FFFFFFC0' },
   numberRule: { flex: 1, fontSize: 14, lineHeight: 21 },
 
   // Section cards

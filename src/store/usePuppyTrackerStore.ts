@@ -47,10 +47,17 @@ export interface WeightLog {
 }
 
 export type AlertLevel = 'critical' | 'high' | 'none';
+export type AlertType =
+  | 'lost_weight'
+  | 'very_slow_gain'
+  | 'below_birth_weight'
+  | 'runt'
+  | 'slow_gain';
 
 export interface PuppyAlert {
   puppyId: string;
   level: AlertLevel;
+  type: AlertType;
   title: string;
   message: string;
   action: string;
@@ -82,6 +89,7 @@ function calculateAlerts(
     return {
       puppyId: puppy.id,
       level: 'critical',
+      type: 'lost_weight',
       title: `🔴 ${puppy.nickname} lost weight`,
       message: `Lost ${Math.abs(gain)}g since last weigh. Weight loss after Day 1 needs immediate attention.`,
       action: 'Supplement with Esbilac after each nursing session. If no improvement in 6 hours, call your vet.',
@@ -94,6 +102,7 @@ function calculateAlerts(
     return {
       puppyId: puppy.id,
       level: 'critical',
+      type: 'very_slow_gain',
       title: `🔴 ${puppy.nickname} — very slow gain`,
       message: `Only ${gain}g gain in the last ${Math.round(hoursSinceLastWeigh)} hours. Small breed puppies need 10–20g per day.`,
       action: 'Supplement with formula after every nursing session. Weigh again in 4 hours.',
@@ -105,6 +114,7 @@ function calculateAlerts(
     return {
       puppyId: puppy.id,
       level: 'critical',
+      type: 'below_birth_weight',
       title: `🔴 ${puppy.nickname} below birth weight`,
       message: `Current weight (${latest.weightG}g) is more than 10% below birth weight (${puppy.birthWeightG}g).`,
       action: 'This puppy needs immediate supplementation. Call your vet if not improving within 4 hours.',
@@ -131,6 +141,7 @@ function calculateAlerts(
     return {
       puppyId: puppy.id,
       level: 'high',
+      type: 'runt',
       title: `⚠️ ${puppy.nickname} — runt alert`,
       message: `This puppy is significantly lighter than the heaviest littermate (more than 25% difference).`,
       action: 'Move this puppy to the front of the rotation. Supplement after every nursing session.',
@@ -147,6 +158,7 @@ function calculateAlerts(
       return {
         puppyId: puppy.id,
         level: 'high',
+        type: 'slow_gain',
         title: `⚠️ ${puppy.nickname} — slow gain`,
         message: `Gaining less than 10% per day for 2 consecutive weighings.`,
         action: 'Supplement with formula. Ensure this puppy gets rear nipples (highest milk flow).',
@@ -170,7 +182,10 @@ interface PuppyTrackerState {
   setupProfiles: (puppies: PuppyProfile[]) => void;
   addPuppy: (puppy: PuppyProfile) => void;
   updatePuppy: (id: string, updates: Partial<PuppyProfile>) => void;
+  deletePuppy: (id: string) => void;
+  resetProfiles: () => void;
   addWeightLog: (puppyId: string, weightG: number, notes?: string) => void;
+  deleteWeightLog: (logId: string) => void;
   clearAll: () => void;
 
   // Queries
@@ -205,6 +220,13 @@ export const usePuppyTrackerStore = create<PuppyTrackerState>()(
         puppies: s.puppies.map(p => p.id === id ? { ...p, ...updates } : p),
       })),
 
+      deletePuppy: (id) => set((s) => ({
+        puppies: s.puppies.filter(p => p.id !== id),
+        weightLogs: s.weightLogs.filter(l => l.puppyId !== id),
+      })),
+
+      resetProfiles: () => set({ puppies: [], profilesSetUp: false }),
+
       addWeightLog: (puppyId, weightG, notes) => set((s) => ({
         weightLogs: [
           ...s.weightLogs,
@@ -217,6 +239,10 @@ export const usePuppyTrackerStore = create<PuppyTrackerState>()(
             synced: false,
           },
         ],
+      })),
+
+      deleteWeightLog: (logId) => set((s) => ({
+        weightLogs: s.weightLogs.filter(l => l.id !== logId),
       })),
 
       clearAll: () => set({ puppies: [], weightLogs: [], profilesSetUp: false }),

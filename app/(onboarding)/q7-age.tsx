@@ -36,7 +36,7 @@ export default function Q7Age() {
   }, [selected, setDamAge, goNext]);
 
   return (
-    <OnboardingScreen illustration="🎂" heroColor="#2C6E6F"
+    <OnboardingScreen illustrationImage={require("../../assets/images/onboard-age.png")}
       headline="How old is she?"
       subtext="Dogs under 2 or over 6 have higher pregnancy risks."
       onNext={handleContinue} onBack={() => goBack('q7-age')} nextDisabled={!selected}>

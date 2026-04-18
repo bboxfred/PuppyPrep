@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
   },
   itemText: {
     fontSize: FontSizes.lg,
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'YoungSerif-Regular',
     color: Colors.cream + '50',
   },
   itemTextSelected: {
@@ -316,7 +316,7 @@ const styles = StyleSheet.create({
   },
   colon: {
     fontSize: FontSizes['2xl'],
-    fontFamily: 'Nunito-ExtraBold',
+    fontFamily: 'YoungSerif-Regular',
     color: Colors.cream,
     marginHorizontal: 2,
     marginTop: -2,

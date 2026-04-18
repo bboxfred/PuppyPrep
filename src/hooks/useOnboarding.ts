@@ -21,7 +21,11 @@ function computeFlow(
   if (!status) return ['q1-breed', 'q2-status'];
 
   if (status === 'pregnant') {
-    const flow = [
+    // q4-mating-date is needed in BOTH branches: when the user knows the
+    // mating date, and when they chose "I don't know — let me enter an
+    // estimated due date instead." The question simply renders differently
+    // (it reads `dateIsEstimated` from the store to switch its label).
+    return [
       'q1-breed',
       'q2-status',
       'q3-mating-known',
@@ -32,10 +36,6 @@ function computeFlow(
       'q8-weight',
       'q12-notifications',
     ];
-    if (matingDateKnown === false) {
-      return flow.filter((r) => r !== 'q4-mating-date');
-    }
-    return flow;
   }
 
   // status === 'born' — no need to confirm pregnancy, it's already happened

@@ -22,7 +22,7 @@ export default function Q10PuppyCount() {
   }, [count, setPuppyCount, goNext]);
 
   return (
-    <OnboardingScreen illustration="🐾" heroColor="#2C6E6F"
+    <OnboardingScreen illustrationImage={require("../../assets/images/onboard-puppy-count.png")}
       headline="How many puppies are there?"
       subtext="We need this for feeding volumes and to watch for runts."
       onNext={handleContinue} onBack={() => goBack('q10-puppy-count')}>

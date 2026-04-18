@@ -2,16 +2,18 @@
  * SETTINGS SCREEN — notification controls, account, app info.
  */
 import { useState, useCallback } from 'react';
-import { View, ScrollView, Pressable, Switch, StyleSheet, Alert } from 'react-native';
+import { View, ScrollView, Pressable, Switch, Image, TextInput, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Bell, Clock, RefreshCw, User, Info, ChevronRight } from 'lucide-react-native';
+import { Bell, Clock, User, Info } from 'lucide-react-native';
 import { Text } from '@/components/ui/Text';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Colors, Spacing, Radius } from '@/constants/design-system';
+import { Colors, Spacing, Radius, Fonts } from '@/constants/design-system';
 import { useUserStore } from '@/store/useUserStore';
 import { useCalendarStore } from '@/store/useCalendarStore';
 import { useNotifications } from '@/hooks/useNotifications';
+
+const PUPPY_PREP_LOGO = require('../../assets/images/puppyprep-logo.png');
 
 const TIME_OPTIONS = ['07:00', '08:00', '09:00', '10:00'];
 const TIME_LABELS: Record<string, string> = {
@@ -60,8 +62,10 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      {/* Header — "Settings" title on the left, logo on the right, side by side */}
       <View style={styles.header}>
-        <Text variant="display" weight="heavy" style={styles.title}>Settings</Text>
+        <Text style={styles.title}>Settings</Text>
+        <Image source={PUPPY_PREP_LOGO} style={styles.logo} resizeMode="contain" />
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -109,6 +113,37 @@ export default function SettingsScreen() {
                 </Text>
               </Pressable>
             ))}
+          </View>
+
+          {/* Manual time entry — HH:MM, 24h. Overrides the preset chips above. */}
+          <View style={styles.manualTimeRow}>
+            <Text variant="caption" color={Colors.inkSoft} style={styles.manualTimeLabel}>
+              Or set a specific time
+            </Text>
+            <View style={styles.manualTimeInputRow}>
+              <TextInput
+                value={notifTime}
+                onChangeText={(v) => {
+                  // Accept partial input (user is typing); apply only if it's valid HH:MM
+                  if (/^\d{0,2}:?\d{0,2}$/.test(v)) {
+                    if (/^\d{1,2}:\d{2}$/.test(v)) {
+                      const [h, m] = v.split(':').map(Number);
+                      if (h >= 0 && h < 24 && m >= 0 && m < 60) {
+                        handleChangeTime(v.padStart(5, '0'));
+                      }
+                    }
+                  }
+                }}
+                placeholder="HH:MM"
+                placeholderTextColor={Colors.inkFaint}
+                keyboardType="numbers-and-punctuation"
+                maxLength={5}
+                style={styles.manualTimeInput}
+              />
+              <Text variant="caption" color={Colors.inkFaint} style={styles.manualTimeHint}>
+                24-hour format · e.g. 06:30 or 21:15
+              </Text>
+            </View>
           </View>
         </Card>
 
@@ -170,16 +205,64 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  header: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.md, paddingBottom: Spacing.sm },
-  title: { fontSize: 28 },
-  scrollContent: { padding: Spacing.lg },
-  sectionTitle: { fontSize: 15, marginBottom: Spacing.sm, marginTop: Spacing.lg },
+  container: { flex: 1, backgroundColor: Colors.paper },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.sm,
+    paddingBottom: Spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.rule,
+  },
+  logo: { width: 130, height: 32 },
+  title: {
+    fontFamily: Fonts.display, // Young Serif
+    fontSize: 28,
+    lineHeight: 32,
+    color: Colors.ink,
+    letterSpacing: -0.4,
+  },
+  // Tight gap: first section starts immediately under the header.
+  scrollContent: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.sm, paddingBottom: Spacing.xl },
+  sectionTitle: { fontSize: 15, marginBottom: Spacing.sm, marginTop: Spacing.md },
   settingCard: { marginBottom: Spacing.sm },
   settingRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   settingText: { flex: 1, marginRight: Spacing.md },
   settingLabel: { marginBottom: Spacing.sm },
   timeChips: { flexDirection: 'row', gap: Spacing.sm, flexWrap: 'wrap' },
+  manualTimeRow: {
+    marginTop: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: Colors.rule,
+    paddingTop: Spacing.sm + 2,
+  },
+  manualTimeLabel: {
+    marginBottom: 6,
+    letterSpacing: 0.3,
+  },
+  manualTimeInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  manualTimeInput: {
+    width: 90,
+    borderWidth: 1,
+    borderColor: Colors.rule,
+    borderRadius: Radius.sm,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 8,
+    fontFamily: 'DMSans-Medium',
+    fontSize: 15,
+    color: Colors.ink,
+    backgroundColor: Colors.paper,
+  },
+  manualTimeHint: {
+    flex: 1,
+    fontSize: 11,
+  },
   timeChip: {
     paddingHorizontal: 14, paddingVertical: 8,
     borderRadius: Radius.pill, borderWidth: 1.5, borderColor: Colors.creamDark,

@@ -14,18 +14,24 @@ import { Button } from '@/components/ui/Button';
 import { Colors, Spacing, Radius, Shadows } from '@/constants/design-system';
 import { useSubscription, PRICE } from '@/hooks/useSubscription';
 
+// Features unlocked by Puppy Prep Pro. The library is NOT listed here —
+// the entire Info Library is always free, for everyone, with no gating.
 const FEATURES = [
-  'Full care calendar (8 weeks)',
-  'Complete Info Library',
-  'Puppy weight tracker',
-  'Push notification reminders',
-  'Weight trend charts & alerts',
+  'Full care calendar (pregnancy through 8 weeks)',
+  'Push notification reminders — never miss a deworming dose',
+  'Puppy weight tracker with trend charts',
+  'Runt & slow-gain alerts',
+  'Home screen widget',
+  'Export to Google Calendar / Apple Calendar',
 ];
 
+// Always free — no payment, no trial needed. The full Info Library lives
+// here because life-safety content should never sit behind a paywall.
 const ALWAYS_FREE = [
+  'Complete Info Library — every guide, every article',
   'Birth Guide',
   'Emergency Guide',
-  '14-day free trial',
+  '14-day free trial of Pro features',
 ];
 
 export default function PaywallScreen() {
@@ -57,8 +63,10 @@ export default function PaywallScreen() {
         {/* Hero */}
         <LinearGradient colors={[Colors.primary, Colors.primaryLight]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
           <Text style={styles.heroEmoji}>🐾</Text>
-          <Text style={styles.heroTitle}>Keep going with{'\n'}Puppy Prep Pro</Text>
-          <Text style={styles.heroSub}>Your 14-day trial is over — unlock everything with a single payment.</Text>
+          <Text style={styles.heroTitle}>Unlock the full{'\n'}care calendar</Text>
+          <Text style={styles.heroSub}>
+            The complete Info Library is always free. Pro adds the personalised day-by-day calendar, reminders, and weight tracker — one payment, yours forever.
+          </Text>
         </LinearGradient>
 
         {/* What you get */}
@@ -131,8 +139,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg, alignItems: 'center',
   },
   heroEmoji: { fontSize: 48, marginBottom: Spacing.md },
-  heroTitle: { fontFamily: 'Nunito-ExtraBold', fontSize: 26, color: '#FFF', textAlign: 'center', lineHeight: 33 },
-  heroSub: { fontFamily: 'Quicksand-Medium', fontSize: 14, color: '#FFFFFFB0', textAlign: 'center', marginTop: Spacing.sm, lineHeight: 21 },
+  heroTitle: { fontFamily: 'YoungSerif-Regular', fontSize: 26, color: '#FFF', textAlign: 'center', lineHeight: 33 },
+  heroSub: { fontFamily: 'DMSans-Medium', fontSize: 14, color: '#FFFFFFB0', textAlign: 'center', marginTop: Spacing.sm, lineHeight: 21 },
   section: { paddingHorizontal: Spacing.lg, marginTop: Spacing.lg },
   sectionTitle: { marginBottom: Spacing.md },
   featureRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginBottom: Spacing.sm + 2 },

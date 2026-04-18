@@ -29,7 +29,9 @@ export default function Q8Weight() {
   }, [isValid, weightNum, setDamWeight, goNext]);
 
   return (
-    <OnboardingScreen illustration="⚖️" heroColor="#3D8B8C"
+    <OnboardingScreen
+      illustrationImage={require("../../assets/images/onboard-weigh.png")}
+      illustrationScale={1.44}
       headline="How much does she weigh?"
       subtext="We use this to calculate safe formula volumes and whelping box size."
       onNext={handleContinue} onBack={() => goBack('q8-weight')} nextDisabled={!isValid}>
@@ -65,17 +67,34 @@ export default function Q8Weight() {
 }
 
 const styles = StyleSheet.create({
-  breedRef: { marginBottom: Spacing.md },
-  inputRow: { flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.md },
-  input: {
-    flex: 1, backgroundColor: Colors.surface, borderRadius: Radius.md,
-    paddingHorizontal: Spacing.md, paddingVertical: Spacing.md, fontSize: FontSizes['3xl'],
-    fontFamily: 'monospace', color: Colors.textPrimary, textAlign: 'center',
-    borderWidth: 2, borderColor: Colors.creamDark,
+  breedRef: { marginBottom: Spacing.md, textAlign: 'center' },
+  // Fixed-size compact row — input is hard-capped so it renders the same
+  // on any viewport (phone, tablet, web). NO flex on children — explicit
+  // widths everywhere to prevent stretching.
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+    alignSelf: 'center',
   },
-  unit: { marginLeft: Spacing.sm, fontSize: FontSizes.xl },
-  helpCard: { marginBottom: Spacing.md, backgroundColor: Colors.creamLight },
+  input: {
+    width: 140,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.sm + 2,
+    fontSize: FontSizes['2xl'],
+    fontFamily: 'monospace',
+    color: Colors.textPrimary,
+    textAlign: 'center',
+    borderWidth: 1,
+    borderColor: Colors.rule,
+  },
+  unit: { fontSize: FontSizes.xl, minWidth: 30 },
+  helpCard: { marginBottom: Spacing.md },
   step: { lineHeight: 24 },
-  safetyCard: { backgroundColor: Colors.coral + '08', borderWidth: 1, borderColor: Colors.coral + '20' },
+  safetyCard: { backgroundColor: Colors.criticalBg, borderWidth: 1, borderColor: Colors.critical + '40' },
   safetyText: { marginTop: Spacing.xs, lineHeight: 20 },
 });

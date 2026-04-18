@@ -212,10 +212,10 @@ const styles = StyleSheet.create({
   },
   priorityLabel: { fontSize: 11, fontWeight: '700', color: '#FFF', letterSpacing: 0.5 },
   headerTitle: {
-    fontFamily: 'Nunito-ExtraBold', fontSize: 24, color: '#FFF',
+    fontFamily: 'YoungSerif-Regular', fontSize: 24, color: '#FFF',
     lineHeight: 32, marginBottom: 4,
   },
-  headerDate: { fontFamily: 'Quicksand-Medium', fontSize: 14, color: '#FFFFFFB0' },
+  headerDate: { fontFamily: 'DMSans-Medium', fontSize: 14, color: '#FFFFFFB0' },
 
   // Content
   scroll: { flex: 1 },

@@ -90,5 +90,5 @@ const styles = StyleSheet.create({
   eventTitle: { marginTop: 4, fontSize: 12, lineHeight: 16 },
   dotRow: { flexDirection: 'row', gap: 4, marginTop: 6, alignItems: 'center' },
   dot: { width: 6, height: 6, borderRadius: 3 },
-  moreCount: { fontSize: 10, color: Colors.textLight, fontFamily: 'Quicksand-Medium' },
+  moreCount: { fontSize: 10, color: Colors.textLight, fontFamily: 'DMSans-Medium' },
 });

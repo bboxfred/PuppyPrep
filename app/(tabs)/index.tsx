@@ -3,29 +3,28 @@
  * Main screen after onboarding. Shows countdown, tasks, upcoming, actions.
  */
 import { useState, useCallback, useMemo } from 'react';
-import { View, ScrollView, RefreshControl, Pressable, StyleSheet } from 'react-native';
+import { View, ScrollView, RefreshControl, Pressable, Image, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Settings, Bell } from 'lucide-react-native';
+import { Settings, Bell, BellOff } from 'lucide-react-native';
 import { Text } from '@/components/ui/Text';
 import { CountdownCard } from '@/components/dashboard/CountdownCard';
+import { DailyProgress } from '@/components/dashboard/DailyProgress';
+import { NotificationsModal } from '@/components/dashboard/NotificationsModal';
+import { RecordBirthModal } from '@/components/dashboard/RecordBirthModal';
+import { PuppiesArrivedCta } from '@/components/dashboard/PuppiesArrivedCta';
 import { TodayTasks } from '@/components/dashboard/TodayTasks';
 import { UpcomingStrip } from '@/components/dashboard/UpcomingStrip';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { DamHealthBanner } from '@/components/dashboard/DamHealthBanner';
 import { Button } from '@/components/ui/Button';
-import { Colors, Spacing, Radius } from '@/constants/design-system';
+import { Colors, Spacing, Radius, Fonts } from '@/constants/design-system';
 import { usePuppyStore } from '@/store/usePuppyStore';
 import { useUserStore } from '@/store/useUserStore';
 import { useCalendarStore } from '@/store/useCalendarStore';
 import { toDateKey } from '@/utils/calendar-helpers';
 
-function getGreeting(): string {
-  const h = new Date().getHours();
-  if (h < 12) return 'Good morning';
-  if (h < 18) return 'Good afternoon';
-  return 'Good evening';
-}
+const PUPPY_PREP_LOGO = require('../../assets/images/puppyprep-logo.png');
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -34,8 +33,24 @@ export default function DashboardScreen() {
   const breedName = usePuppyStore((s) => s.breedName);
   const birthDate = usePuppyStore((s) => s.birthDate);
   const tier = useUserStore((s) => s.subscriptionTier);
+  const status = usePuppyStore((s) => s.status);
+  const estimatedDueDate = usePuppyStore((s) => s.estimatedDueDate);
   const [refreshing, setRefreshing] = useState(false);
   const [nudgeDismissed, setNudgeDismissed] = useState(false);
+  const [notifModalOpen, setNotifModalOpen] = useState(false);
+  const [recordBirthOpen, setRecordBirthOpen] = useState(false);
+
+  // Show "puppies arrived?" CTA when dog is still pregnant
+  const showBirthCta = status === 'pregnant';
+  // Is the dog overdue? (estimated due date is in the past)
+  const isOverdue = useMemo(() => {
+    if (!estimatedDueDate) return false;
+    const due = new Date(estimatedDueDate);
+    due.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today > due;
+  }, [estimatedDueDate]);
 
   const todayStr = toDateKey(new Date());
   const todayEventCount = useMemo(() =>
@@ -110,25 +125,34 @@ export default function DashboardScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Header */}
+      {/* Header — Puppy Prep logo */}
       <View style={styles.header}>
-        <View>
-          <Text variant="caption" color={Colors.textSecondary}>{getGreeting()}</Text>
-          <Text variant="heading" weight="bold">
-            {dogName ?? breedName ?? 'Puppy Prep'}
-          </Text>
-        </View>
+        <Image source={PUPPY_PREP_LOGO} style={styles.logo} resizeMode="contain" />
         <View style={styles.headerIcons}>
-          <Pressable style={styles.iconBtn}>
-            <Bell size={20} color={Colors.textPrimary} strokeWidth={2} />
-            {unreadCount > 0 && (
+          <Pressable
+            onPress={() => setNotifModalOpen(true)}
+            style={styles.iconBtn}
+            hitSlop={12}
+          >
+            {/* BellOff + slash when notifications are unavailable (free tier);
+                Bell when active (paid). */}
+            {tier === 'free' ? (
+              <BellOff size={20} color={Colors.inkSoft} strokeWidth={1.75} />
+            ) : (
+              <Bell size={20} color={Colors.ink} strokeWidth={1.75} />
+            )}
+            {tier !== 'free' && unreadCount > 0 && (
               <View style={styles.badge}>
                 <Text style={styles.badgeText}>{unreadCount}</Text>
               </View>
             )}
           </Pressable>
-          <Pressable style={styles.iconBtn}>
-            <Settings size={20} color={Colors.textPrimary} strokeWidth={2} />
+          <Pressable
+            onPress={() => router.push('/(tabs)/settings' as any)}
+            style={styles.iconBtn}
+            hitSlop={12}
+          >
+            <Settings size={20} color={Colors.ink} strokeWidth={1.75} />
           </Pressable>
         </View>
       </View>
@@ -143,6 +167,17 @@ export default function DashboardScreen() {
       >
         {/* Countdown / Age card */}
         <CountdownCard />
+
+        {/* "Puppies arrived?" CTA — animated gold card, red variant when overdue */}
+        {showBirthCta && (
+          <PuppiesArrivedCta
+            isOverdue={isOverdue}
+            onPress={() => setRecordBirthOpen(true)}
+          />
+        )}
+
+        {/* NEW: Daily progress summary — today's completion, streak, next critical */}
+        <DailyProgress />
 
         {/* Dam health banners */}
         <DamHealthBanner />
@@ -164,14 +199,15 @@ export default function DashboardScreen() {
           </View>
         )}
 
-        {/* Free tier nudge */}
+        {/* Free tier nudge — positions Pro as the calendar/reminders/tracker
+            upgrade. The library stays free for everyone, always. */}
         {showFreeTierNudge && (
           <View style={styles.nudgeBanner}>
             <Text variant="body" weight="semibold" color={Colors.textPrimary}>
               Enjoying Puppy Prep?
             </Text>
             <Text variant="caption" color={Colors.textSecondary} style={styles.nudgeText}>
-              Your free trial ends in {Math.max(0, 14 - trialDays)} days. Keep everything unlocked for S$12.99.
+              Your trial ends in {Math.max(0, 14 - trialDays)} days. Keep the personalised calendar, reminders, and weight tracker for S$12.99 — one payment. The Info Library stays free either way.
             </Text>
             <View style={styles.nudgeButtons}>
               <Pressable onPress={() => setNudgeDismissed(true)} style={styles.nudgeDismiss}>
@@ -191,6 +227,25 @@ export default function DashboardScreen() {
         {/* Bottom spacer */}
         <View style={{ height: Spacing['2xl'] }} />
       </ScrollView>
+
+      {/* In-app notifications modal (replaces browser confirm/alert) */}
+      <NotificationsModal
+        visible={notifModalOpen}
+        tier={tier}
+        unreadCount={unreadCount}
+        onClose={() => setNotifModalOpen(false)}
+        onUpgrade={() => {
+          setNotifModalOpen(false);
+          router.push('/paywall' as any);
+        }}
+      />
+
+      {/* Record Birth modal — shown from the "Puppies arrived?" CTA. Transitions
+          status from 'pregnant' to 'born' and regenerates the schedule. */}
+      <RecordBirthModal
+        visible={recordBirthOpen}
+        onClose={() => setRecordBirthOpen(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -198,12 +253,17 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
 
-  // Header
+  // Header — logo on left, icons on right
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md,
-    backgroundColor: Colors.surface,
-    borderBottomWidth: 1, borderBottomColor: Colors.creamDark + '20',
+    paddingHorizontal: Spacing.lg, paddingVertical: Spacing.sm,
+    backgroundColor: Colors.paper,
+    borderBottomWidth: 1, borderBottomColor: Colors.rule,
+  },
+  logo: {
+    // 2357x453 logo → width 160 gives height ~31, fits neatly in the bar
+    width: 160,
+    height: 40,
   },
   headerIcons: { flexDirection: 'row', gap: Spacing.sm },
   iconBtn: {
@@ -247,4 +307,43 @@ const styles = StyleSheet.create({
   emptyEmoji: { fontSize: 56, marginBottom: Spacing.lg },
   emptyTitle: { textAlign: 'center', marginBottom: Spacing.sm },
   emptyText: { textAlign: 'center', lineHeight: 22 },
+
+  // "Puppies arrived?" CTA — shown only when status = 'pregnant'. Sits
+  // directly under the countdown. Forest accent normally; terracotta/red
+  // tint when overdue so it reads as an urgent prompt.
+  birthCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    backgroundColor: Colors.forest + '10',
+    borderWidth: 1.5,
+    borderColor: Colors.forest + '40',
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    marginBottom: Spacing.lg,
+  },
+  birthCtaOverdue: {
+    backgroundColor: '#D4726A15',
+    borderColor: '#D4726A60',
+  },
+  birthCtaText: { flex: 1, gap: 2 },
+  birthCtaTitle: {
+    fontFamily: Fonts.display,
+    fontSize: 15,
+    lineHeight: 20,
+    color: Colors.forest,
+  },
+  birthCtaSub: {
+    fontFamily: Fonts.body,
+    fontSize: 12,
+    lineHeight: 16,
+    color: Colors.inkSoft,
+  },
+  birthCtaArrow: {
+    fontFamily: Fonts.display,
+    fontSize: 28,
+    color: Colors.forest,
+    lineHeight: 28,
+  },
 });
