@@ -907,8 +907,21 @@ interface Breed {
 }
 ```
 
-Minimum 20 breeds to launch:
-Jack Russell Terrier, Golden Retriever, Labrador Retriever, German Shepherd, French Bulldog, Bulldog, Poodle (Standard), Poodle (Miniature), Shih Tzu, Maltese, Chihuahua, Beagle, Corgi (Pembroke), Dachshund, Siberian Husky, Border Collie, Rottweiler, Great Dane, Boxer, Mixed Breed.
+Minimum 20 breeds to launch — EXCEEDED. Current total: **42 breeds** in registry + **birthing-guide** reference (applies to all breeds).
+
+### Batch history
+
+- **Batch 1 (Phase 1 — JRT group, 8 breeds):** Jack Russell Terrier, Parson Russell Terrier, Russell Terrier, Smooth Fox Terrier, Wire Fox Terrier, Rat Terrier, Border Terrier, Miniature Pinscher + Mixed Breed fallback.
+- **Batches 2–7 (V2 rollout, 25 breeds):** Golden Retriever, Labrador Retriever, German Shepherd, Border Collie, Australian Shepherd, Doberman Pinscher, Standard Poodle, Chihuahua, Yorkshire Terrier, Pomeranian, Toy Poodle, Miniature Poodle, Maltese, Bichon Frise, Cavalier KCS, Shih Tzu, Dachshund, Pembroke Corgi, French Bulldog, English Bulldog, Boxer, Rottweiler, Great Dane, Siberian Husky, Beagle.
+- **Batch 8 (current — 8 breeds):** German Shorthaired Pointer, Cane Corso, Boston Terrier, Miniature Schnauzer, Havanese, Shetland Sheepdog, Cockapoo, Pug.
+
+### Key Batch 8 notes
+
+- **Pug C-section rate = 27.3%** (Evans & Adams 2010, peer-reviewed). NOT 60–86% as some sources cite — that's an outdated figure. The app uses 27.3% as authoritative.
+- **`SHELTIE_MDR1_DRUG_CARD`** — additional named export in `src/data/infobase/shetland_sheepdog.ts`. Imported directly where needed (no barrel file). Lists drugs contraindicated for Collie-family breeds with the MDR1 mutation: ivermectin at high doses, loperamide, acepromazine, butorphanol at high doses, certain chemo agents.
+- **Brachycephalic tiering**: Boston Terrier and Pug are **SEVERE** (elective C-section standard of care, full heat protocol, BOAS anaesthesia protocol). Cane Corso is **MILD** (`special_care_flags: ['brachycephalic-mild']` — anaesthesia caution only, not full surgery/heat regimen).
+- **Cockapoo size variants**: the Cockapoo `{BREED}_PROFILE` has nested `adult_weight_kg.toy_cockapoo` (2.5–5.5 kg) and `adult_weight_kg.mini_cockapoo` (5.5–11 kg). The registry uses the full 2.5–11 kg range as the default so users get sensible fallbacks before entering actual dam weight.
+- **Havanese + Pug** both have `hypoglycemia_risk: 'high'` — their `PROFILE.feeding_frequency_hours.week_1` was corrected to **1.5** (90 min) in this batch to match the engine's authoritative feeding rule. Every HIGH-risk breed MUST specify 1.5 for week_1.
 
 ---
 

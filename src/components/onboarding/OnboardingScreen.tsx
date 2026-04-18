@@ -107,41 +107,62 @@ export function OnboardingScreen({
         </Animated.View>
       </ScrollView>
 
-      {/* BOTTOM BAR */}
+      {/* BOTTOM BAR
+          When a skip label is present we stack it ABOVE the back/next row
+          (centered + italic) so it never eats horizontal space from the
+          primary actions. When there's no skip, the row is just back+next
+          as before. */}
       {!hideBottomBar && (
-        <Animated.View entering={FadeIn.delay(320).duration(320)} style={styles.bottomBar}>
-          {/* Back */}
-          {onBack ? (
-            <Pressable onPress={onBack} style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}>
-              <ArrowLeft size={18} color={Colors.forest} strokeWidth={1.75} />
-              <Text color={Colors.forest} style={styles.backLabel}>Back</Text>
-            </Pressable>
-          ) : (
-            <View style={{ width: 100 }} />
-          )}
-
-          {/* Skip (caption style) */}
+        <Animated.View entering={FadeIn.delay(320).duration(320)} style={styles.bottomBarWrap}>
+          {/* Skip — stacked above the action row so it doesn't squish Next */}
           {skipLabel && onSkip && (
-            <Pressable onPress={onSkip} style={styles.skipBtn}>
-              <Text color={Colors.inkFaint} style={styles.skipLabel}>{skipLabel}</Text>
+            <Pressable onPress={onSkip} style={styles.skipBtnTop} hitSlop={8}>
+              <Text color={Colors.inkFaint} style={styles.skipLabelTop}>{skipLabel}</Text>
             </Pressable>
           )}
 
-          {/* Next — forest primary pill (the ONE shadow allowed) */}
-          {onNext && (
-            <Pressable
-              onPress={onNext}
-              disabled={nextDisabled}
-              style={({ pressed }) => [
-                styles.nextBtn,
-                nextDisabled && { opacity: 0.35 },
-                pressed && !nextDisabled && { transform: [{ scale: 0.97 }] },
-              ]}
-            >
-              <Text color={Colors.paper} style={styles.nextLabel}>{nextLabel}</Text>
-              <ArrowRight size={18} color={Colors.paper} strokeWidth={1.75} />
-            </Pressable>
-          )}
+          <View style={styles.bottomBar}>
+            {/* Back */}
+            {onBack ? (
+              <Pressable onPress={onBack} style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}>
+                <ArrowLeft size={18} color={Colors.forest} strokeWidth={1.75} />
+                <Text color={Colors.forest} style={styles.backLabel}>Back</Text>
+              </Pressable>
+            ) : (
+              <View style={{ width: 100 }} />
+            )}
+
+            {/* Next — forest primary pill (the ONE shadow allowed).
+                Text is forced to a SINGLE LINE with numberOfLines={1} —
+                otherwise long labels like "Build my calendar" wrap to two
+                lines and the arrow sits next to the multi-line block,
+                creating a visual misalignment. adjustsFontSizeToFit lets
+                the font shrink on narrow viewports instead of truncating. */}
+            {onNext && (
+              <Pressable
+                onPress={onNext}
+                disabled={nextDisabled}
+                style={({ pressed }) => [
+                  styles.nextBtn,
+                  nextDisabled && { opacity: 0.35 },
+                  pressed && !nextDisabled && { transform: [{ scale: 0.97 }] },
+                ]}
+              >
+                <View style={styles.nextContent}>
+                  <Text
+                    color={Colors.paper}
+                    style={styles.nextLabel}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.75}
+                  >
+                    {nextLabel}
+                  </Text>
+                  <ArrowRight size={18} color={Colors.paper} strokeWidth={1.75} />
+                </View>
+              </Pressable>
+            )}
+          </View>
         </Animated.View>
       )}
     </View>
@@ -216,16 +237,21 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xs,
   },
 
-  // Bottom bar — paper with hairline top
+  // Bottom bar wrap — holds the optional skip row AND the action row together
+  // with a single paper background + hairline top border.
+  bottomBarWrap: {
+    backgroundColor: Colors.paper,
+    borderTopWidth: 1,
+    borderTopColor: Colors.rule,
+  },
   bottomBar: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    backgroundColor: Colors.paper,
-    borderTopWidth: 1,
-    borderTopColor: Colors.rule,
+    // Slightly tighter top padding when a skip is stacked above
+    paddingTop: 10,
+    paddingBottom: Spacing.md,
   },
   backBtn: {
     flexDirection: 'row',
@@ -244,28 +270,50 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.bodySemi,
     fontSize: 14,
   },
-  skipBtn: {
-    paddingVertical: Spacing.sm,
+  // Skip stacked ABOVE the back/next row — centered and italic, caption size.
+  // Tight vertical padding so it sits just above the action row with a
+  // small, EQUAL gap top and bottom.
+  skipBtnTop: {
+    alignSelf: 'center',
+    paddingTop: 6,
+    paddingBottom: 6,
     paddingHorizontal: Spacing.md,
   },
-  skipLabel: {
+  skipLabelTop: {
     fontFamily: Fonts.body,
-    fontSize: 13,
+    fontSize: 12,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    lineHeight: 16,
   },
+  // Outer pill — fixed height so centering is deterministic
   nextBtn: {
     flex: 1,
-    flexDirection: 'row',
+    height: 52,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
     backgroundColor: Colors.forest,
-    paddingVertical: 14,
     borderRadius: Radius.pill,
     ...Shadows.primaryButton, // the ONE allowed elevation
   },
+  // Inner content row — what actually holds the text + arrow. Uses
+  // horizontal padding to give the text-arrow pair breathing room; the
+  // flex layout guarantees both children center within the pill even when
+  // font lineHeight differs between platforms.
+  nextContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingHorizontal: Spacing.md,
+  },
   nextLabel: {
     fontFamily: Fonts.display, // Young Serif label per spec
-    fontSize: 17,
-    letterSpacing: 0.3,
+    fontSize: 15,
+    lineHeight: 18, // tight lineHeight matches icon visual height (18)
+    letterSpacing: 0.2,
+    textAlignVertical: 'center',
+    includeFontPadding: false,
+    flexShrink: 1,
   },
 });

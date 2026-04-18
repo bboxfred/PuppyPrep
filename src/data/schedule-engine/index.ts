@@ -60,18 +60,62 @@ import {
 
 async function loadInfobase(info_base_id: string): Promise<any> {
   switch (info_base_id) {
-    case 'jrt':
-      return await import('../infobase/jrt');
-    case 'fox_terrier':
-      return await import('../infobase/fox_terrier');
-    case 'rat_terrier':
-      return await import('../infobase/rat_terrier');
-    case 'border_terrier':
-      return await import('../infobase/border_terrier');
-    case 'miniature_pinscher':
-      return await import('../infobase/miniature_pinscher');
-    case 'mixed_breed':
-      return await import('../infobase/mixed_breed');
+    // ── JRT group (Phase 1)
+    case 'jrt':                 return await import('../infobase/jrt');
+    case 'fox_terrier':         return await import('../infobase/fox_terrier');
+    case 'rat_terrier':         return await import('../infobase/rat_terrier');
+    case 'border_terrier':      return await import('../infobase/border_terrier');
+    case 'miniature_pinscher':  return await import('../infobase/miniature_pinscher');
+
+    // ── Retrievers
+    case 'golden_retriever':    return await import('../infobase/golden_retriever');
+    case 'labrador_retriever':  return await import('../infobase/labrador_retriever');
+
+    // ── Shepherds / working dogs
+    case 'german_shepherd':         return await import('../infobase/german_shepherd');
+    case 'border_collie':           return await import('../infobase/border_collie');
+    case 'australian_shepherd':     return await import('../infobase/australian_shepherd');
+    case 'doberman_pinscher':       return await import('../infobase/doberman_pinscher');
+    case 'german_shorthaired_pointer': return await import('../infobase/german_shorthaired_pointer');
+    case 'shetland_sheepdog':       return await import('../infobase/shetland_sheepdog');
+
+    // ── Toy / small
+    case 'chihuahua':           return await import('../infobase/chihuahua');
+    case 'yorkshire_terrier':   return await import('../infobase/yorkshire_terrier');
+    case 'pomeranian':          return await import('../infobase/pomeranian');
+    case 'maltese':             return await import('../infobase/maltese');
+    case 'shih_tzu':            return await import('../infobase/shih_tzu');
+    case 'bichon_frise':        return await import('../infobase/bichon_frise');
+    case 'cavalier_kcs':        return await import('../infobase/cavalier_kcs');
+    case 'toy_poodle':          return await import('../infobase/toy_poodle');
+    case 'miniature_poodle':    return await import('../infobase/miniature_poodle');
+    case 'standard_poodle':     return await import('../infobase/standard_poodle');
+    case 'miniature_schnauzer': return await import('../infobase/miniature_schnauzer');
+    case 'havanese':            return await import('../infobase/havanese');
+    case 'cockapoo':            return await import('../infobase/cockapoo');
+
+    // ── Brachycephalic bulldogs
+    case 'french_bulldog':      return await import('../infobase/french_bulldog');
+    case 'english_bulldog':     return await import('../infobase/english_bulldog');
+    case 'boxer':               return await import('../infobase/boxer');
+    case 'boston_terrier':      return await import('../infobase/boston_terrier');
+    case 'pug':                 return await import('../infobase/pug');
+
+    // ── Long-back / chondrodystrophic (IVDD risk)
+    case 'dachshund':           return await import('../infobase/dachshund');
+    case 'pembroke_corgi':      return await import('../infobase/pembroke_corgi');
+
+    // ── Large / giant
+    case 'rottweiler':          return await import('../infobase/rottweiler');
+    case 'great_dane':          return await import('../infobase/great_dane');
+    case 'siberian_husky':      return await import('../infobase/siberian_husky');
+    case 'cane_corso':          return await import('../infobase/cane_corso');
+
+    // ── Scent hound
+    case 'beagle':              return await import('../infobase/beagle');
+
+    // ── Fallback
+    case 'mixed_breed':         return await import('../infobase/mixed_breed');
     default:
       console.warn(`WARNING: No infobase found for "${info_base_id}" — falling back to mixed_breed. Add this breed to loadInfobase() in schedule-engine/index.ts.`);
       return await import('../infobase/mixed_breed');
@@ -79,38 +123,65 @@ async function loadInfobase(info_base_id: string): Promise<any> {
 }
 
 /**
+ * Resolve the PROFILE export for a loaded infobase. Every infobase exports
+ * its profile as `{BREED}_PROFILE` (e.g. CHIHUAHUA_PROFILE, JRT_PROFILE).
+ * We try the dynamic key first, then the legacy hardcoded fallbacks for
+ * safety if an infobase uses an unusual export name.
+ */
+function resolveProfile(infobase: any, info_base_id: string): any {
+  const dynamicKey = info_base_id.toUpperCase() + '_PROFILE';
+  return (
+    infobase[dynamicKey] ??
+    infobase.JRT_PROFILE ??
+    infobase.FOX_TERRIER_PROFILE ??
+    infobase.RAT_TERRIER_PROFILE ??
+    infobase.BORDER_TERRIER_PROFILE ??
+    infobase.MIN_PIN_PROFILE ??
+    infobase.MIXED_BREED_PROFILE
+  );
+}
+
+function resolveHealthSchedule(infobase: any, info_base_id: string): any {
+  const dynamicKey = info_base_id.toUpperCase() + '_HEALTH_SCHEDULE';
+  return (
+    infobase[dynamicKey] ??
+    infobase.JRT_HEALTH_SCHEDULE ??
+    infobase.FOX_TERRIER_HEALTH_SCHEDULE ??
+    infobase.RAT_TERRIER_HEALTH_SCHEDULE ??
+    infobase.BORDER_TERRIER_HEALTH_SCHEDULE ??
+    infobase.MIN_PIN_HEALTH_SCHEDULE ??
+    infobase.MIXED_BREED_HEALTH_SCHEDULE
+  );
+}
+
+/**
  * Validate that a loaded infobase has the minimum required exports.
  * Warns in console if anything is missing — does not throw.
  */
-function validateInfobase(infobase: any, breedName: string): void {
+function validateInfobase(infobase: any, breedName: string, info_base_id: string): void {
   const missing: string[] = [];
 
-  // Must have a health schedule with deworming + vaccinations
-  const healthSchedule =
-    infobase.JRT_HEALTH_SCHEDULE ?? infobase.FOX_TERRIER_HEALTH_SCHEDULE ??
-    infobase.RAT_TERRIER_HEALTH_SCHEDULE ?? infobase.BORDER_TERRIER_HEALTH_SCHEDULE ??
-    infobase.MIN_PIN_HEALTH_SCHEDULE ?? infobase.MIXED_BREED_HEALTH_SCHEDULE;
-
+  // Use the dynamic resolvers so every breed's {BREED}_PROFILE and
+  // {BREED}_HEALTH_SCHEDULE export is checked — not just the six legacy
+  // JRT-group prefixes. This prevents false "missing" warnings for
+  // every new breed (Chihuahua, French Bulldog, Golden Retriever, etc.).
+  const healthSchedule = resolveHealthSchedule(infobase, info_base_id);
   if (!healthSchedule) missing.push('health schedule (deworming + vaccinations)');
   else {
     if (!healthSchedule.deworming?.length) missing.push('deworming schedule');
     if (!healthSchedule.vaccinations?.length) missing.push('vaccination schedule');
   }
 
-  // Must have a breed profile with formula volumes
-  const profile =
-    infobase.JRT_PROFILE ?? infobase.FOX_TERRIER_PROFILE ??
-    infobase.RAT_TERRIER_PROFILE ?? infobase.BORDER_TERRIER_PROFILE ??
-    infobase.MIN_PIN_PROFILE ?? infobase.MIXED_BREED_PROFILE;
-
+  const profile = resolveProfile(infobase, info_base_id);
   if (!profile) missing.push('breed profile');
   else {
     if (!profile.formula_volumes_per_feeding_ml) missing.push('formula volumes in breed profile');
     if (profile.tube_size_french === undefined) missing.push('tube size in breed profile');
+    if (!profile.feeding_frequency_hours) missing.push('feeding frequency in breed profile');
   }
 
   if (missing.length > 0) {
-    console.warn(`WARNING: Infobase for "${breedName}" is missing: ${missing.join(', ')}. Care information may be incomplete.`);
+    console.warn(`WARNING: Infobase for "${breedName}" (${info_base_id}) is missing: ${missing.join(', ')}. Care information may be incomplete.`);
   }
 }
 
@@ -144,19 +215,36 @@ function resolveAnchorDate(input: Omit<ScheduleInput, 'anchor_date' | 'feeding_f
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FEEDING FREQUENCY RESOLVER
-// Returns the correct interval (hours) per week based on breed risk level
+//
+// THE AUTHORITATIVE SOURCE is each breed's PROFILE.feeding_frequency_hours.
+// Chihuahua, Yorkshire Terrier, Pomeranian, Maltese, Toy Poodle, Miniature
+// Pinscher, and Miniature Rat Terrier all specify week_1: 1.5 (90 minutes)
+// for hypoglycaemia prevention. Large/medium breeds specify week_1: 2.
+//
+// By reading from the loaded infobase profile we (a) avoid hardcoding every
+// small-breed exception in the engine and (b) keep the infobase files as
+// the single source of truth for breed-specific care intervals.
 // ─────────────────────────────────────────────────────────────────────────────
 
-function resolveFeedingFrequency(
-  is_min_pin: boolean,
-  is_miniature_rat_terrier: boolean
+const DEFAULT_FEEDING_FREQUENCY = {
+  week_1: 2, week_2: 2.5, week_3: 3, week_4: 4,
+} as const;
+
+function resolveFeedingFrequencyFromProfile(
+  profile: any,
+  input: { is_min_pin: boolean; is_rat_terrier: boolean; rat_terrier_variety?: 'miniature' | 'standard' }
 ): { week_1: number; week_2: number; week_3: number; week_4: number } {
-  // Min Pins and miniature Rat Terriers need more frequent feedings
-  if (is_min_pin || is_miniature_rat_terrier) {
+  // Preferred: read from the breed's PROFILE export
+  if (profile?.feeding_frequency_hours) {
+    return profile.feeding_frequency_hours;
+  }
+  // Legacy JRT-group fallback — Min Pin + miniature Rat Terrier were
+  // historically the only 90-min-feed breeds before per-profile intervals.
+  const is_mini_rat = input.is_rat_terrier && input.rat_terrier_variety === 'miniature';
+  if (input.is_min_pin || is_mini_rat) {
     return { week_1: 1.5, week_2: 2, week_3: 2.5, week_4: 3 };
   }
-  // Standard for all other JRT-group breeds
-  return { week_1: 2, week_2: 2.5, week_3: 3, week_4: 4 };
+  return { ...DEFAULT_FEEDING_FREQUENCY };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -411,22 +499,41 @@ export async function generateSchedule(
   rawInput: Omit<ScheduleInput, 'anchor_date' | 'feeding_frequency_hours' | 'hypoglycemia_risk'>
 ): Promise<CalendarEvent[]> {
 
-  // ── Step 1: Resolve computed fields ──────────────────────────────────────
+  // ── Step 1: Resolve anchor date ─────────────────────────────────────────
   const anchor_date = resolveAnchorDate(rawInput);
 
-  const is_miniature_rat_terrier =
-    rawInput.is_rat_terrier && rawInput.rat_terrier_variety === 'miniature';
+  // ── Step 2: Load the breed's isolated infobase FIRST ─────────────────────
+  // Load order matters: the infobase PROFILE is the authoritative source
+  // for feeding frequency AND (via the breed registry) for hypoglycaemia
+  // risk. Loading the infobase first lets those values drive downstream
+  // resolvers instead of the old hardcoded JRT-only logic.
+  const { getBreedById } = await import('../breeds/registry');
+  const breed = getBreedById(rawInput.breed_id);
+  const info_base_id = breed?.info_base_id ?? 'mixed_breed';
+  const infobase = await loadInfobase(info_base_id);
+  validateInfobase(infobase, rawInput.breed_name, info_base_id);
 
-  const feeding_frequency_hours = resolveFeedingFrequency(
-    rawInput.is_min_pin,
-    is_miniature_rat_terrier
-  );
+  const profile = resolveProfile(infobase, info_base_id);
 
-  const hypoglycemia_risk =
-    rawInput.is_min_pin || is_miniature_rat_terrier ? 'high'
-    : rawInput.size_category === 'toy' ? 'high'
-    : rawInput.size_category === 'small' ? 'medium'
-    : 'low';
+  // ── Step 3: Resolve computed fields from the loaded profile ─────────────
+  // Feeding frequency comes from the profile's feeding_frequency_hours
+  // (week_1 = 1.5 for toy breeds / Min Pin / mini Rat Terrier, 2 for most
+  // others). Falls back to the legacy Min-Pin-aware resolver only if the
+  // profile is missing the field.
+  const feeding_frequency_hours = resolveFeedingFrequencyFromProfile(profile, {
+    is_min_pin: rawInput.is_min_pin,
+    is_rat_terrier: rawInput.is_rat_terrier,
+    rat_terrier_variety: rawInput.rat_terrier_variety,
+  });
+
+  // Hypoglycaemia risk: prefer the breed profile's explicit value, else the
+  // registry's flag, else fall back to size-category heuristic.
+  const hypoglycemia_risk: 'low' | 'medium' | 'high' =
+    profile?.hypoglycemia_risk
+    ?? breed?.hypoglycemia_risk
+    ?? (rawInput.size_category === 'toy' ? 'high'
+        : rawInput.size_category === 'small' ? 'medium'
+        : 'low');
 
   const input: ScheduleInput = {
     ...rawInput,
@@ -434,13 +541,6 @@ export async function generateSchedule(
     feeding_frequency_hours,
     hypoglycemia_risk,
   };
-
-  // ── Step 2: Load the breed's isolated infobase ────────────────────────────
-  const { getBreedById } = await import('../breeds/registry');
-  const breed = getBreedById(rawInput.breed_id);
-  const info_base_id = breed?.info_base_id ?? 'mixed_breed';
-  const infobase = await loadInfobase(info_base_id);
-  validateInfobase(infobase, rawInput.breed_name);
 
   // ── Step 3: Build base events from infobase templates ────────────────────
   // Helper: resolve event arrays from breed-specific OR JRT_* export names
