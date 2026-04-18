@@ -62,3 +62,17 @@ Logo/
 # Raw intermediate image generation outputs.
 # Final, stripped versions live in assets/images/ and ARE committed.
 assets/generated/
+
+# Mobile distribution — NEVER commit signing credentials or service keys
+credentials/
+*.p12
+*.mobileprovision
+*.jks
+*.keystore
+google-play-service-account.json
+upload-keystore.jks
+GoogleService-Info.plist
+google-services.json
+
+# EAS local state
+.eas-build-local
