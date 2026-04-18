@@ -66,7 +66,7 @@ Everything you need to do to get the app downloadable on the App Store + Google 
 - [ ] Host the two markdown files as HTML pages at public URLs:
   - `https://puppyprep.app/privacy`
   - `https://puppyprep.app/terms`
-  - (Or use GitHub Pages for free: `https://bboxfred.github.io/puppycare-compass/privacy`)
+  - (Or use GitHub Pages for free: `https://bboxfred.github.io/PuppyPrep/privacy`)
 
 ---
 

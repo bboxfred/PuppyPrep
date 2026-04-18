@@ -23,14 +23,14 @@ Privacy URL is mandatory for Play Store submission.
 
 ```bash
 cd /Users/freddylimgx/puppycare-compass
-gh repo create bboxfred/puppycare-compass --public --source=. --remote=origin --push
+gh repo create bboxfred/PuppyPrep --public --source=. --remote=origin --push
 ```
 
 Then:
-1. Open `https://github.com/bboxfred/puppycare-compass/settings/pages`
+1. Open `https://github.com/bboxfred/PuppyPrep/settings/pages`
 2. Source: **Deploy from branch**, Branch: **main**, Folder: **/docs**
 3. Click **Save**
-4. Wait ~45 seconds, then confirm `https://bboxfred.github.io/puppycare-compass/privacy/` returns HTTP 200
+4. Wait ~45 seconds, then confirm `https://bboxfred.github.io/PuppyPrep/privacy/` returns HTTP 200
 
 ### 🟦 Step 2 — Link project to EAS cloud (2 min)
 
@@ -114,7 +114,7 @@ In Play Console:
 
 4. **Data safety**: use the declaration table in `docs/STORE_LISTING.md` — it maps each question to its answer
 
-5. **Privacy policy URL**: `https://bboxfred.github.io/puppycare-compass/privacy/`
+5. **Privacy policy URL**: `https://bboxfred.github.io/PuppyPrep/privacy/`
    (or `https://puppyprep.app/privacy/` once the custom domain resolves)
 
 6. **Contact email**: `support@puppyprep.app` (or your preferred)

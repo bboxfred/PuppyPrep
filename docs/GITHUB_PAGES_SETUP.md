@@ -6,11 +6,11 @@ These URLs are REQUIRED by both stores before submission. GitHub Pages is free.
 
 1. **Push this repo to GitHub** (if not already):
    ```bash
-   gh repo create bboxfred/puppycare-compass --public --source=. --remote=origin --push
+   gh repo create bboxfred/PuppyPrep --public --source=. --remote=origin --push
    ```
 
 2. **Enable Pages**:
-   - Go to `https://github.com/bboxfred/puppycare-compass/settings/pages`
+   - Go to `https://github.com/bboxfred/PuppyPrep/settings/pages`
    - Under "Build and deployment":
      - **Source:** "Deploy from a branch"
      - **Branch:** `main`
@@ -18,10 +18,10 @@ These URLs are REQUIRED by both stores before submission. GitHub Pages is free.
    - Click **Save**.
 
 3. **Wait 30–60 seconds.** Your pages will be live at:
-   - **Home:** `https://bboxfred.github.io/puppycare-compass/`
-   - **Privacy:** `https://bboxfred.github.io/puppycare-compass/privacy/`
-   - **Terms:** `https://bboxfred.github.io/puppycare-compass/terms/`
-   - **Support:** `https://bboxfred.github.io/puppycare-compass/support/`
+   - **Home:** `https://bboxfred.github.io/PuppyPrep/`
+   - **Privacy:** `https://bboxfred.github.io/PuppyPrep/privacy/`
+   - **Terms:** `https://bboxfred.github.io/PuppyPrep/terms/`
+   - **Support:** `https://bboxfred.github.io/PuppyPrep/support/`
 
 4. **Use these URLs in the stores.**
 
