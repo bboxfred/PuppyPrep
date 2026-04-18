@@ -5,8 +5,6 @@
     "appVersionSource": "remote"
   },
   "build": {
-    "//": "Three profiles: dev (local dev client), preview (internal test builds, signed like prod), production (store-ready).",
-
     "development": {
       "developmentClient": true,
       "distribution": "internal",
@@ -20,7 +18,6 @@
       },
       "channel": "development"
     },
-
     "preview": {
       "distribution": "internal",
       "ios": {
@@ -32,7 +29,6 @@
       },
       "channel": "preview"
     },
-
     "production": {
       "autoIncrement": true,
       "ios": {
@@ -44,17 +40,13 @@
       "channel": "production"
     }
   },
-
   "submit": {
     "production": {
-      "//": "Fill these in after you create Apple Developer + Play Console accounts.",
-      "//ios_comment": "appleId: email used for App Store Connect. ascAppId: numeric App ID from ASC. appleTeamId: 10-char team ID from developer.apple.com.",
       "ios": {
         "appleId": "REPLACE_WITH_YOUR_APPLE_ID@example.com",
         "ascAppId": "REPLACE_WITH_ASC_APP_ID",
         "appleTeamId": "REPLACE_WITH_TEAM_ID"
       },
-      "//android_comment": "serviceAccountKeyPath: path to the JSON key you download from Google Cloud Console. track: 'internal' (first), 'production' (public launch).",
       "android": {
         "serviceAccountKeyPath": "./credentials/google-play-service-account.json",
         "track": "internal",
