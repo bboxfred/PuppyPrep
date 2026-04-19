@@ -199,7 +199,7 @@ export default function CalendarScreen() {
           {weekDays.map((day) => (
             <Pressable
               key={day.key}
-              onPress={() => { setSelectedDate(day.key); setSheetOpen(true); }}
+              onPress={() => setSelectedDate(day.key)}
               style={[styles.weekDay, day.isSelected && styles.weekDaySelected, day.isToday && !day.isSelected && styles.weekDayToday]}
             >
               <Text variant="caption" color={day.isSelected ? Colors.textOnDark : Colors.textSecondary} style={styles.weekDayName}>

@@ -253,12 +253,55 @@ const CATEGORY_ORDER: Record<EventCategory, number> = {
  * Sort events by date ascending, then by priority, then by category.
  * Removes true duplicates (same id).
  */
+/**
+ * Normalise a title for duplicate-detection purposes only.
+ * - Lowercase
+ * - Strip emoji, punctuation, and common filler words ("today", "the", "a", "your")
+ * - Collapse whitespace
+ *
+ * This catches pairs like:
+ *   "Set up the whelping box" vs "Set up the whelping box"                → dupe
+ *   "Assemble your whelping kit" vs "Assemble your whelping kit today"    → dupe
+ *   "Do not leave her alone" vs "Do not leave her alone from today"       → dupe
+ *   "🏥 Book vet: X-ray for puppy count" vs "X-ray to count puppies"      → NOT dupe
+ *     (different enough wording — engine errs on the side of keeping both)
+ */
+const FILLER_WORDS = new Set([
+  'the', 'a', 'an', 'your', 'today', 'from', 'to', 'of', 'for', 'in',
+  'now', 'on', 'at', 'and', 'or', 'but', 'is', 'was', 'are', 'her', 'his',
+]);
+function normaliseTitleForDedupe(title: string): string {
+  return title
+    // Strip emoji / non-word characters
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(w => w.length > 0 && !FILLER_WORDS.has(w))
+    .sort()
+    .join(' ');
+}
+
 export function sortAndDeduplicate(events: CalendarEvent[]): CalendarEvent[] {
-  // Remove duplicates by ID
-  const seen = new Set<string>();
-  const unique = events.filter(e => {
-    if (seen.has(e.id)) return false;
-    seen.add(e.id);
+  // PASS 1: dedupe by exact ID (catches event-generator bugs that produce
+  // the same event twice).
+  const seenId = new Set<string>();
+  let unique = events.filter(e => {
+    if (seenId.has(e.id)) return false;
+    seenId.add(e.id);
+    return true;
+  });
+
+  // PASS 2: dedupe by (date + normalised title). This catches the
+  // case where two separate content sources (breed infobase + birthing-
+  // guide, or two different conditional generators) both emit an event
+  // for the same thing on the same day — a common content-migration bug.
+  // Keep the FIRST occurrence; subsequent duplicates are dropped.
+  const seenSignature = new Set<string>();
+  unique = unique.filter(e => {
+    const day = e.date.toISOString().slice(0, 10); // YYYY-MM-DD
+    const sig = `${day}|${normaliseTitleForDedupe(e.title)}`;
+    if (seenSignature.has(sig)) return false;
+    seenSignature.add(sig);
     return true;
   });
 

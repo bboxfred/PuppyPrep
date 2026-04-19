@@ -4,11 +4,15 @@ import { type StateStorage } from 'zustand/middleware';
 /**
  * Zustand persist storage adapter.
  *
- * Native (iOS/Android): MMKV — synchronous, ~30x faster than AsyncStorage.
- * Web (preview/dev):     localStorage fallback — sufficient for testing.
+ * Native (iOS/Android): `react-native-mmkv` — synchronous, ~30× faster
+ *                       than AsyncStorage. Survives app restart + kills.
+ * Web (preview/dev):    localStorage fallback — sufficient for browser testing.
+ *
+ * IMPORTANT: loading real MMKV on web crashes Metro (JSI module not
+ * available), so we lazy-import inside the native branch only.
  */
 
-// Web-safe localStorage wrapper
+// ─── Web fallbacks ─────────────────────────────────────────────────────────
 const webStorage: StateStorage = {
   getItem: (name: string) => {
     try { return localStorage.getItem(name); }
@@ -24,16 +28,38 @@ const webStorage: StateStorage = {
   },
 };
 
-// Web-safe mmkv-compatible shim (used by supabase.ts)
 const webMmkv = {
   getString: (key: string) => { try { return localStorage.getItem(key) ?? undefined; } catch { return undefined; } },
   set: (key: string, value: string) => { try { localStorage.setItem(key, value); } catch {} },
   remove: (key: string) => { try { localStorage.removeItem(key); } catch {} },
 };
 
-export const mmkvStorage: StateStorage = Platform.OS === 'web' ? webStorage : webStorage;
-export const mmkv = Platform.OS === 'web' ? webMmkv : webMmkv;
+// ─── Native MMKV ───────────────────────────────────────────────────────────
+// Lazy-required so web never tries to load the JSI module.
+let nativeStorage: StateStorage | null = null;
+let nativeMmkv: typeof webMmkv | null = null;
 
-// NOTE: On native builds, this file should be swapped to use real MMKV.
-// For now, localStorage works for both web preview AND native dev via Expo Go.
-// Real MMKV integration requires a development build (npx expo run:ios).
+if (Platform.OS !== 'web') {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { MMKV } = require('react-native-mmkv');
+  const instance = new MMKV({ id: 'puppyprep' });
+
+  nativeStorage = {
+    getItem: (name: string) => {
+      const v = instance.getString(name);
+      return v === undefined ? null : v;
+    },
+    setItem: (name: string, value: string) => instance.set(name, value),
+    removeItem: (name: string) => instance.delete(name),
+  };
+
+  nativeMmkv = {
+    getString: (key: string) => instance.getString(key),
+    set: (key: string, value: string) => instance.set(key, value),
+    remove: (key: string) => instance.delete(key),
+  };
+}
+
+// ─── Exports ───────────────────────────────────────────────────────────────
+export const mmkvStorage: StateStorage = nativeStorage ?? webStorage;
+export const mmkv = nativeMmkv ?? webMmkv;

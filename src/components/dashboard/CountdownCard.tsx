@@ -260,16 +260,21 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: Colors.rule,
+    // Solid forest fallback — guarantees the card reads as green even if
+    // the ImageBackground fails to render (RN new-architecture + Android
+    // has a known bug where ImageBackground + imageStyle.borderRadius can
+    // leave gaps at the bottom edge). With this fallback, the "lighter
+    // bottom" patch the user reported can no longer happen.
+    backgroundColor: '#1E3422',
   },
   cardBgImage: {
-    borderRadius: Radius.lg,
-    // Regenerated bg has the subtle subject baked in — image fills the
-    // card naturally via `resizeMode="cover"`.
+    // borderRadius NOT set here — the parent `overflow: 'hidden'` handles
+    // corner clipping. Setting borderRadius on imageStyle caused a bottom-
+    // edge rendering gap on Android + new arch.
   },
   tintOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#1E342266', // forestDeep @ ~40%
-    borderRadius: Radius.lg,
+    backgroundColor: '#1E342266', // forestDeep @ ~40% — mixes with image
   },
   // Inner edge glow — thin cream border inset a few pixels from the card
   // edge. Animated opacity gives a slow "breathing" effect. No sweep, no
