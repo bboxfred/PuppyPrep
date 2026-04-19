@@ -72,9 +72,18 @@ security definer
 set search_path = public
 as $$
 declare
+  -- EVERY field we read from promo_codes gets its own scalar variable.
+  -- We intentionally DO NOT use `promo_codes%rowtype` here — `record.field`
+  -- inside an embedded SQL expression (like inside `jsonb_build_object()`
+  -- or `(v_xxx.days || ' days')::interval`) gets mis-parsed by the inner
+  -- SQL parser as `schema.table`, producing a confusing "relation does
+  -- not exist" error. Plain scalar locals avoid the ambiguity entirely.
   v_uid            uuid := auth.uid();
-  v_code_row       promo_codes%rowtype;
   v_code_key       text;
+  v_days           int;
+  v_expires_at     timestamptz;
+  v_max_uses       int;
+  v_current_uses   int;
   v_now            timestamptz := now();
   v_new_until      timestamptz;
   v_current_until  timestamptz;
@@ -84,11 +93,8 @@ begin
   end if;
 
   -- Case-insensitive lookup + row-lock (prevents concurrent redemption races).
-  -- Postgres parsing note: we assign the full row into v_code_row, but when we
-  -- later need the code TEXT inside another SQL statement we use a plain-text
-  -- variable (v_code_key) — otherwise `v_code_row.code` can be mis-parsed as
-  -- `schema.table` inside UPDATE/INSERT and throw "relation does not exist".
-  select * into v_code_row
+  select code, days, expires_at, max_uses, current_uses
+    into v_code_key, v_days, v_expires_at, v_max_uses, v_current_uses
     from promo_codes
     where lower(code) = lower(input_code)
     for update;
@@ -97,13 +103,11 @@ begin
     return jsonb_build_object('ok', false, 'error', 'code_not_found');
   end if;
 
-  v_code_key := v_code_row.code;
-
-  if v_code_row.expires_at is not null and v_code_row.expires_at < v_now then
+  if v_expires_at is not null and v_expires_at < v_now then
     return jsonb_build_object('ok', false, 'error', 'code_expired');
   end if;
 
-  if v_code_row.current_uses >= v_code_row.max_uses then
+  if v_current_uses >= v_max_uses then
     return jsonb_build_object('ok', false, 'error', 'code_exhausted');
   end if;
 
@@ -117,7 +121,7 @@ begin
 
   -- Compute new expiry — extend from existing pro_until if still active
   select pro_until into v_current_until from user_pro_entitlements where user_id = v_uid;
-  v_new_until := greatest(coalesce(v_current_until, v_now), v_now) + (v_code_row.days || ' days')::interval;
+  v_new_until := greatest(coalesce(v_current_until, v_now), v_now) + (v_days || ' days')::interval;
 
   -- Grant entitlement (upsert)
   insert into user_pro_entitlements (user_id, pro_until, source, source_reference, updated_at)
@@ -133,7 +137,7 @@ begin
 
   return jsonb_build_object(
     'ok', true,
-    'days_granted', v_code_row.days,
+    'days_granted', v_days,
     'pro_until', v_new_until
   );
 end;
