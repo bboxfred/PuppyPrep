@@ -1,11 +1,14 @@
 import { useEffect, useState, useRef } from 'react';
 import { Platform } from 'react-native';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet, View, ActivityIndicator } from 'react-native';
 import * as Font from 'expo-font';
 import * as Notifications from 'expo-notifications';
+import 'react-native-url-polyfill/auto';
+import { useAuthStore, selectIsSignedIn } from '@/store/useAuthStore';
+import { startCloudSyncSubscriptions } from '@/lib/cloud-sync';
 // ── Field Journal fonts ──
 import { YoungSerif_400Regular } from '@expo-google-fonts/young-serif';
 import {
@@ -32,7 +35,35 @@ Notifications.setNotificationHandler({
 export default function RootLayout() {
   const [fontsLoaded, setFontsLoaded] = useState(false);
   const router = useRouter();
+  const segments = useSegments();
   const notificationResponseListener = useRef<Notifications.EventSubscription | null>(null);
+
+  // ── Auth gate ─────────────────────────────────────────────────────────────
+  // Initialise Supabase session once on boot, then watch for auth changes.
+  const isInitialized = useAuthStore((s) => s.isInitialized);
+  const isSignedIn = useAuthStore(selectIsSignedIn);
+  const initializeAuth = useAuthStore((s) => s.initialize);
+
+  useEffect(() => {
+    initializeAuth();
+    // Subscribe to store changes → debounced cloud push.
+    // Only does real work once a signed-in user exists (guards inside pushToCloud).
+    startCloudSyncSubscriptions();
+  }, [initializeAuth]);
+
+  // Redirect based on auth state. Runs AFTER initialise finishes so we
+  // don't flash the login screen for users with a persisted session.
+  useEffect(() => {
+    if (!isInitialized) return;
+    const inAuthGroup = segments[0] === '(auth)';
+
+    if (!isSignedIn && !inAuthGroup) {
+      router.replace('/(auth)/login');
+    } else if (isSignedIn && inAuthGroup) {
+      // Signed in but stuck on the login screen — route to app
+      router.replace('/(tabs)');
+    }
+  }, [isInitialized, isSignedIn, segments, router]);
 
   // Load Field Journal fonts (Young Serif + DM Sans). All references to legacy
   // Nunito / Quicksand names were swept to the new names in a prior step.

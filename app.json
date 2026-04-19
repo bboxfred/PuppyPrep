@@ -36,12 +36,7 @@
       "infoPlist": {
         "NSUserNotificationsUsageDescription": "Puppy Prep uses notifications to remind you of critical care tasks — deworming, feeding windows, vet visits — so you never miss one.",
         "ITSAppUsesNonExemptEncryption": false,
-        "LSApplicationQueriesSchemes": [
-          "tel",
-          "maps",
-          "tel",
-          "maps"
-        ]
+        "LSApplicationQueriesSchemes": ["tel", "maps"]
       }
     },
     "android": {
@@ -57,17 +52,9 @@
         "NOTIFICATIONS",
         "VIBRATE",
         "RECEIVE_BOOT_COMPLETED",
-        "SCHEDULE_EXACT_ALARM",
-        "NOTIFICATIONS",
-        "VIBRATE",
-        "RECEIVE_BOOT_COMPLETED",
         "SCHEDULE_EXACT_ALARM"
       ],
       "blockedPermissions": [
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION",
-        "CAMERA",
-        "READ_CONTACTS",
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
         "CAMERA",
@@ -89,6 +76,26 @@
           "icon": "./assets/images/app-icon.png",
           "color": "#2D4A32",
           "defaultChannel": "default"
+        }
+      ],
+      "expo-web-browser",
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "TodayCalendar",
+              "label": "Puppy Prep — Today",
+              "description": "Today's critical tasks + 6-week calendar at a glance.",
+              "minWidth": "250dp",
+              "minHeight": "250dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 4,
+              "resizeMode": "horizontal|vertical",
+              "previewImage": "./assets/images/app-icon.png",
+              "updatePeriodMillis": 0
+            }
+          ]
         }
       ]
     ],

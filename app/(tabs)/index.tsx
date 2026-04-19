@@ -2,7 +2,8 @@
  * DASHBOARD / TODAY VIEW
  * Main screen after onboarding. Shows countdown, tasks, upcoming, actions.
  */
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
+import { refreshWidget } from '@/widgets/widget-data';
 import { View, ScrollView, RefreshControl, Pressable, Image, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -39,6 +40,11 @@ export default function DashboardScreen() {
   const [nudgeDismissed, setNudgeDismissed] = useState(false);
   const [notifModalOpen, setNotifModalOpen] = useState(false);
   const [recordBirthOpen, setRecordBirthOpen] = useState(false);
+
+  // Refresh the Android home-screen widget every time the dashboard mounts.
+  // Battery-friendly: widget has no scheduled periodic refresh — it updates
+  // only on user interaction (opening the app) and key mutations.
+  useEffect(() => { refreshWidget(); }, [events.length]);
 
   // Show "puppies arrived?" CTA when dog is still pregnant
   const showBirthCta = status === 'pregnant';

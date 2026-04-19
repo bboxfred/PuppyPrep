@@ -4,7 +4,7 @@
 import { useState, useCallback } from 'react';
 import { View, ScrollView, Pressable, Switch, Image, TextInput, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Bell, Clock, User, Info } from 'lucide-react-native';
+import { Bell, Clock, User, Info, LogOut, UserCog } from 'lucide-react-native';
 import { Text } from '@/components/ui/Text';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -12,6 +12,9 @@ import { Colors, Spacing, Radius, Fonts } from '@/constants/design-system';
 import { useUserStore } from '@/store/useUserStore';
 import { useCalendarStore } from '@/store/useCalendarStore';
 import { useNotifications } from '@/hooks/useNotifications';
+import { useAuthStore } from '@/store/useAuthStore';
+import { supabase } from '@/lib/supabase';
+import { clearLocal, pushToCloud } from '@/lib/cloud-sync';
 
 const PUPPY_PREP_LOGO = require('../../assets/images/puppyprep-logo.png');
 
@@ -29,6 +32,54 @@ export default function SettingsScreen() {
 
   const { requestPermissions, rescheduleAll, getScheduledNotifications, isLoading } = useNotifications();
   const [notifsEnabled, setNotifsEnabled] = useState(true);
+
+  // ── Auth ──────────────────────────────────────────────────────────────────
+  const authUser = useAuthStore((s) => s.user);
+  const userEmail = authUser?.email ?? 'Signed in';
+  const userName =
+    (authUser?.user_metadata as any)?.full_name ??
+    (authUser?.user_metadata as any)?.name ??
+    authUser?.email?.split('@')[0] ??
+    'User';
+
+  const handleSignOut = useCallback(() => {
+    Alert.alert(
+      'Sign out?',
+      'Your data is safely stored in your account — sign back in on any device to restore it.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign out',
+          style: 'destructive',
+          onPress: async () => {
+            // Push any pending changes before wiping local state
+            await pushToCloud().catch(() => {});
+            await supabase.auth.signOut();
+            clearLocal();
+            // Auth gate in root layout will redirect to /(auth)/login
+          },
+        },
+      ]
+    );
+  }, []);
+
+  const handleChangeAccount = useCallback(() => {
+    Alert.alert(
+      'Change account?',
+      'This signs you out and returns to the login screen so you can sign in with a different Google account.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Change account',
+          onPress: async () => {
+            await pushToCloud().catch(() => {});
+            await supabase.auth.signOut();
+            clearLocal();
+          },
+        },
+      ]
+    );
+  }, []);
 
   const handleToggleNotifs = useCallback(async (value: boolean) => {
     if (value) {
@@ -158,6 +209,34 @@ export default function SettingsScreen() {
           />
         )}
 
+        {/* ── ACCOUNT ── */}
+        <Text variant="body" weight="bold" style={styles.sectionTitle}>
+          <User size={16} color={Colors.primary} /> Account
+        </Text>
+
+        <Card style={styles.settingCard}>
+          <View style={styles.settingRow}>
+            <View style={styles.settingText}>
+              <Text variant="body" weight="semibold" numberOfLines={1}>{userName}</Text>
+              <Text variant="caption" color={Colors.textSecondary} numberOfLines={1}>{userEmail}</Text>
+            </View>
+          </View>
+
+          <Pressable onPress={handleChangeAccount} style={styles.accountAction}>
+            <UserCog size={18} color={Colors.primary} strokeWidth={1.75} />
+            <Text variant="body" color={Colors.primary} weight="semibold">
+              Change account
+            </Text>
+          </Pressable>
+
+          <Pressable onPress={handleSignOut} style={styles.accountAction}>
+            <LogOut size={18} color="#C05B3F" strokeWidth={1.75} />
+            <Text variant="body" color="#C05B3F" weight="semibold">
+              Sign out
+            </Text>
+          </Pressable>
+        </Card>
+
         {/* ── SUBSCRIPTION ── */}
         <Text variant="body" weight="bold" style={styles.sectionTitle}>
           <User size={16} color={Colors.primary} /> Subscription
@@ -230,6 +309,16 @@ const styles = StyleSheet.create({
   settingCard: { marginBottom: Spacing.sm },
   settingRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   settingText: { flex: 1, marginRight: Spacing.md },
+  accountAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    marginTop: Spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: Colors.rule,
+    paddingHorizontal: Spacing.xs,
+  },
   settingLabel: { marginBottom: Spacing.sm },
   timeChips: { flexDirection: 'row', gap: Spacing.sm, flexWrap: 'wrap' },
   manualTimeRow: {
