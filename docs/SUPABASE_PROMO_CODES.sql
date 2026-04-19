@@ -71,74 +71,87 @@ language plpgsql
 security definer
 set search_path = public
 as $$
+-- Force plpgsql to resolve any ambiguous identifier to a LOCAL VARIABLE,
+-- never to a column. This is the definitive fix for the repeated
+-- "relation does not exist" errors we saw with v_code / v_code_row /
+-- v_code_key earlier — the SQL parser inside embedded statements was
+-- treating local names as schema.table. With this pragma + underscore-
+-- prefixed locals (which can't possibly collide with promo_codes or
+-- user_pro_entitlements columns), every identifier resolves correctly.
+#variable_conflict use_variable
 declare
-  -- EVERY field we read from promo_codes gets its own scalar variable.
-  -- We intentionally DO NOT use `promo_codes%rowtype` here — `record.field`
-  -- inside an embedded SQL expression (like inside `jsonb_build_object()`
-  -- or `(v_xxx.days || ' days')::interval`) gets mis-parsed by the inner
-  -- SQL parser as `schema.table`, producing a confusing "relation does
-  -- not exist" error. Plain scalar locals avoid the ambiguity entirely.
-  v_uid            uuid := auth.uid();
-  v_code_key       text;
-  v_days           int;
-  v_expires_at     timestamptz;
-  v_max_uses       int;
-  v_current_uses   int;
-  v_now            timestamptz := now();
-  v_new_until      timestamptz;
-  v_current_until  timestamptz;
+  _uid             uuid := auth.uid();
+  _code_text       text;
+  _days_granted    int;
+  _expires_at      timestamptz;
+  _max_uses        int;
+  _current_uses    int;
+  _now             timestamptz := now();
+  _new_until       timestamptz;
+  _current_until   timestamptz;
 begin
-  if v_uid is null then
+  if _uid is null then
     return jsonb_build_object('ok', false, 'error', 'not_signed_in');
   end if;
 
   -- Case-insensitive lookup + row-lock (prevents concurrent redemption races).
   select code, days, expires_at, max_uses, current_uses
-    into v_code_key, v_days, v_expires_at, v_max_uses, v_current_uses
-    from promo_codes
-    where lower(code) = lower(input_code)
+    into   _code_text, _days_granted, _expires_at, _max_uses, _current_uses
+    from   public.promo_codes
+    where  lower(code) = lower(input_code)
     for update;
 
   if not found then
     return jsonb_build_object('ok', false, 'error', 'code_not_found');
   end if;
 
-  if v_expires_at is not null and v_expires_at < v_now then
+  if _expires_at is not null and _expires_at < _now then
     return jsonb_build_object('ok', false, 'error', 'code_expired');
   end if;
 
-  if v_current_uses >= v_max_uses then
+  if _current_uses >= _max_uses then
     return jsonb_build_object('ok', false, 'error', 'code_exhausted');
   end if;
 
   -- One code per user rule — check if this user already redeemed it
   if exists (
-    select 1 from user_pro_entitlements
-    where user_id = v_uid and source_reference = v_code_key
+    select 1
+    from   public.user_pro_entitlements
+    where  user_id = _uid
+      and  source_reference = _code_text
   ) then
     return jsonb_build_object('ok', false, 'error', 'already_redeemed');
   end if;
 
   -- Compute new expiry — extend from existing pro_until if still active
-  select pro_until into v_current_until from user_pro_entitlements where user_id = v_uid;
-  v_new_until := greatest(coalesce(v_current_until, v_now), v_now) + (v_days || ' days')::interval;
+  select pro_until
+    into _current_until
+    from public.user_pro_entitlements
+    where user_id = _uid;
+
+  _new_until := greatest(coalesce(_current_until, _now), _now)
+                + (_days_granted || ' days')::interval;
 
   -- Grant entitlement (upsert)
-  insert into user_pro_entitlements (user_id, pro_until, source, source_reference, updated_at)
-  values (v_uid, v_new_until, 'promo_code', v_code_key, v_now)
+  insert into public.user_pro_entitlements
+    (user_id, pro_until, source, source_reference, updated_at)
+  values
+    (_uid, _new_until, 'promo_code', _code_text, _now)
   on conflict (user_id) do update
     set pro_until        = excluded.pro_until,
         source           = 'promo_code',
         source_reference = excluded.source_reference,
-        updated_at       = v_now;
+        updated_at       = _now;
 
   -- Increment the code's use count
-  update promo_codes set current_uses = current_uses + 1 where code = v_code_key;
+  update public.promo_codes
+    set current_uses = current_uses + 1
+    where code = _code_text;
 
   return jsonb_build_object(
-    'ok', true,
-    'days_granted', v_days,
-    'pro_until', v_new_until
+    'ok',           true,
+    'days_granted', _days_granted,
+    'pro_until',    _new_until
   );
 end;
 $$;
