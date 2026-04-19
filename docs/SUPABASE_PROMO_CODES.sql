@@ -72,18 +72,23 @@ security definer
 set search_path = public
 as $$
 declare
-  v_uid uuid := auth.uid();
-  v_code promo_codes%rowtype;
-  v_now timestamptz := now();
-  v_new_until timestamptz;
-  v_current_until timestamptz;
+  v_uid            uuid := auth.uid();
+  v_code_row       promo_codes%rowtype;
+  v_code_key       text;
+  v_now            timestamptz := now();
+  v_new_until      timestamptz;
+  v_current_until  timestamptz;
 begin
   if v_uid is null then
     return jsonb_build_object('ok', false, 'error', 'not_signed_in');
   end if;
 
-  -- Case-insensitive lookup + lock the row so concurrent redemptions don't race
-  select * into v_code
+  -- Case-insensitive lookup + row-lock (prevents concurrent redemption races).
+  -- Postgres parsing note: we assign the full row into v_code_row, but when we
+  -- later need the code TEXT inside another SQL statement we use a plain-text
+  -- variable (v_code_key) — otherwise `v_code_row.code` can be mis-parsed as
+  -- `schema.table` inside UPDATE/INSERT and throw "relation does not exist".
+  select * into v_code_row
     from promo_codes
     where lower(code) = lower(input_code)
     for update;
@@ -92,29 +97,31 @@ begin
     return jsonb_build_object('ok', false, 'error', 'code_not_found');
   end if;
 
-  if v_code.expires_at is not null and v_code.expires_at < v_now then
+  v_code_key := v_code_row.code;
+
+  if v_code_row.expires_at is not null and v_code_row.expires_at < v_now then
     return jsonb_build_object('ok', false, 'error', 'code_expired');
   end if;
 
-  if v_code.current_uses >= v_code.max_uses then
+  if v_code_row.current_uses >= v_code_row.max_uses then
     return jsonb_build_object('ok', false, 'error', 'code_exhausted');
   end if;
 
   -- One code per user rule — check if this user already redeemed it
   if exists (
     select 1 from user_pro_entitlements
-    where user_id = v_uid and source_reference = v_code.code
+    where user_id = v_uid and source_reference = v_code_key
   ) then
     return jsonb_build_object('ok', false, 'error', 'already_redeemed');
   end if;
 
   -- Compute new expiry — extend from existing pro_until if still active
   select pro_until into v_current_until from user_pro_entitlements where user_id = v_uid;
-  v_new_until := greatest(coalesce(v_current_until, v_now), v_now) + (v_code.days || ' days')::interval;
+  v_new_until := greatest(coalesce(v_current_until, v_now), v_now) + (v_code_row.days || ' days')::interval;
 
   -- Grant entitlement (upsert)
   insert into user_pro_entitlements (user_id, pro_until, source, source_reference, updated_at)
-  values (v_uid, v_new_until, 'promo_code', v_code.code, v_now)
+  values (v_uid, v_new_until, 'promo_code', v_code_key, v_now)
   on conflict (user_id) do update
     set pro_until        = excluded.pro_until,
         source           = 'promo_code',
@@ -122,11 +129,11 @@ begin
         updated_at       = v_now;
 
   -- Increment the code's use count
-  update promo_codes set current_uses = current_uses + 1 where code = v_code.code;
+  update promo_codes set current_uses = current_uses + 1 where code = v_code_key;
 
   return jsonb_build_object(
     'ok', true,
-    'days_granted', v_code.days,
+    'days_granted', v_code_row.days,
     'pro_until', v_new_until
   );
 end;
