@@ -29,6 +29,9 @@ interface UserState {
   isAuthenticated: boolean;
   hasCompletedOnboarding: boolean;
 
+  // One-time UI flags
+  widgetSetupDismissed: boolean;   // true after user confirms widget placement OR dismisses the card
+
   // Actions
   setUser: (id: string, email: string) => void;
   clearUser: () => void;
@@ -36,6 +39,7 @@ interface UserState {
   setNotifPreferences: (time: string, leadHours: number) => void;
   setOnboardingComplete: () => void;
   startTrial: () => void;
+  setWidgetSetupDismissed: (v: boolean) => void;
 }
 
 export const useUserStore = create<UserState>()(
@@ -51,6 +55,7 @@ export const useUserStore = create<UserState>()(
       notifLeadTimeHours: 0,
       isAuthenticated: false,
       hasCompletedOnboarding: false,
+      widgetSetupDismissed: false,
 
       setUser: (id, email) => set({ id, email, isAuthenticated: true }),
 
@@ -68,6 +73,8 @@ export const useUserStore = create<UserState>()(
       setOnboardingComplete: () => set({ hasCompletedOnboarding: true }),
 
       startTrial: () => set({ trialStartDate: new Date().toISOString() }),
+
+      setWidgetSetupDismissed: (v) => set({ widgetSetupDismissed: v }),
     }),
     {
       name: 'user-store',

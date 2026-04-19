@@ -14,6 +14,7 @@ import { DailyProgress } from '@/components/dashboard/DailyProgress';
 import { NotificationsModal } from '@/components/dashboard/NotificationsModal';
 import { RecordBirthModal } from '@/components/dashboard/RecordBirthModal';
 import { PuppiesArrivedCta } from '@/components/dashboard/PuppiesArrivedCta';
+import { WidgetSetupCard } from '@/components/dashboard/WidgetSetupCard';
 import { TodayTasks } from '@/components/dashboard/TodayTasks';
 import { UpcomingStrip } from '@/components/dashboard/UpcomingStrip';
 import { QuickActions } from '@/components/dashboard/QuickActions';
@@ -181,6 +182,11 @@ export default function DashboardScreen() {
             onPress={() => setRecordBirthOpen(true)}
           />
         )}
+
+        {/* One-time prompt: place the home-screen widget (Android only).
+            Card auto-hides on iOS / web and after the user confirms
+            placement or dismisses it. */}
+        <WidgetSetupCard />
 
         {/* NEW: Daily progress summary — today's completion, streak, next critical */}
         <DailyProgress />
