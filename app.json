@@ -86,11 +86,11 @@
             {
               "name": "TodayCalendar",
               "label": "Puppy Prep — Today",
-              "description": "Today's critical tasks + 6-week calendar at a glance.",
+              "description": "Today's tasks + full 6-week calendar. Takes up nearly the entire home screen.",
               "minWidth": "250dp",
-              "minHeight": "250dp",
+              "minHeight": "420dp",
               "targetCellWidth": 4,
-              "targetCellHeight": 4,
+              "targetCellHeight": 5,
               "resizeMode": "horizontal|vertical",
               "previewImage": "./assets/images/app-icon.png",
               "updatePeriodMillis": 0
