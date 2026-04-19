@@ -20,21 +20,39 @@ import { Text } from '@/components/ui/Text';
 import { Colors, Spacing, Radius, Fonts } from '@/constants/design-system';
 import { WidgetSetupModal } from './WidgetSetupModal';
 import { useUserStore } from '@/store/useUserStore';
+import { useWidgetStatus } from '@/hooks/useWidgetStatus';
 
 export function WidgetSetupCard() {
   const dismissed = useUserStore((s) => s.widgetSetupDismissed);
   const setDismissed = useUserStore((s) => s.setWidgetSetupDismissed);
   const [modalOpen, setModalOpen] = useState(false);
+  const { isPlaced, canPin, requestPin } = useWidgetStatus();
 
   // Not Android → hide entirely (widget only exists on Android)
   if (Platform.OS !== 'android') return null;
-  // Already dismissed → hide
+  // Widget is already placed → hide (no need to prompt)
+  if (isPlaced) return null;
+  // User explicitly dismissed the card → hide
   if (dismissed) return null;
+
+  const handlePress = async () => {
+    // Fast path: native pin is available — trigger the Android system
+    // dialog directly. User gets a one-tap "Add" confirmation.
+    if (canPin) {
+      try {
+        const ok = await requestPin();
+        if (ok) return; // success — useWidgetStatus will auto-detect placement
+      } catch { /* fall through to guided modal */ }
+    }
+    // Slow path: older Android or custom launcher that rejects pin —
+    // open the visual step-by-step guide instead.
+    setModalOpen(true);
+  };
 
   return (
     <>
       <Pressable
-        onPress={() => setModalOpen(true)}
+        onPress={handlePress}
         style={({ pressed }) => [styles.card, pressed && { opacity: 0.92 }]}
       >
         <View style={styles.iconWrap}>

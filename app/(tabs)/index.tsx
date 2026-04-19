@@ -15,6 +15,7 @@ import { NotificationsModal } from '@/components/dashboard/NotificationsModal';
 import { RecordBirthModal } from '@/components/dashboard/RecordBirthModal';
 import { PuppiesArrivedCta } from '@/components/dashboard/PuppiesArrivedCta';
 import { WidgetSetupCard } from '@/components/dashboard/WidgetSetupCard';
+import { WidgetStatusControl } from '@/components/dashboard/WidgetStatusControl';
 import { TodayTasks } from '@/components/dashboard/TodayTasks';
 import { UpcomingStrip } from '@/components/dashboard/UpcomingStrip';
 import { QuickActions } from '@/components/dashboard/QuickActions';
@@ -235,6 +236,11 @@ export default function DashboardScreen() {
 
         {/* Upcoming strip */}
         <UpcomingStrip />
+
+        {/* Home-screen widget ON/OFF tab — auto-detects placement.
+            OFF + tap → triggers native one-tap pin dialog.
+            ON + tap → explains how to remove (Android owns widget lifecycle). */}
+        <WidgetStatusControl />
 
         {/* Bottom spacer */}
         <View style={{ height: Spacing['2xl'] }} />

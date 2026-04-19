@@ -1,0 +1,7 @@
+{
+  "name": "expo-widget-pin",
+  "version": "0.1.0",
+  "description": "Expo module wrapping Android's AppWidgetManager.requestPinAppWidget for one-tap home-screen widget pinning.",
+  "main": "index.ts",
+  "private": true
+}
